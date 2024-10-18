@@ -5,12 +5,13 @@ namespace PetGrooming_Management_System.IRepositories
 {
     public interface IUserRepository
     {
-        bool verifyPassword(User user, string password);
-        Task<ICollection<User>> getAll();
+        bool VerifyPassword(User user, string password);
+        Task<ICollection<User>> GetAll();
         Task<User> GetUserByUsername(string username);
-        Task<User> getUserById(int id);
-        Task<bool> createUser(UserRequest userDTO);
-        void deleteUser(int id);
-        Task<List<User>> searchUser(string key);
+        Task<User> GetUserById(int id);
+        Task<bool> CreateUser(UserRequest userDTO);
+        void DeleteUser(int id);
+        Task<List<User>> SearchUser(string key);
+        void ModifyUser(int id, ProfileRequest profileDTO);
     }
 }
