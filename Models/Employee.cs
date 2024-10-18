@@ -9,7 +9,9 @@
                 Role = Config.Constant.Role.Employee;
             }
         }
-        public DateTime DateofHire {  get; set; }
-        public int WorkHours { get; set; } = 0;
+        public int TotalAppointment { get; set; }
+        public int TotalWorkHours { get; set; } 
+        public bool WorkStatus { get; set; }
+        public bool IsWorking { get; set; }
     }
 }

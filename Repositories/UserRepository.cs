@@ -3,6 +3,7 @@ using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
+using PetGrooming_Management_System.Utils;
 
 
 namespace PetGrooming_Management_System.Repositories
@@ -15,7 +16,7 @@ namespace PetGrooming_Management_System.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<bool> createUser(UserRequest userDTO)
+        public async Task<bool> CreateUser(UserRequest userDTO)
         {
             var _user = new User
             {
@@ -28,30 +29,30 @@ namespace PetGrooming_Management_System.Repositories
 
             };
             await _dbContext.AddAsync(_user);
-            var res = _dbContext.SaveChanges();
+            var res = await _dbContext.SaveChangesAsync();
             return res > 0;
         }
 
-        public async void deleteUser(int id)
+        public async void DeleteUser(int id)
         {
-            var _user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == id);
+            var _user = await GetUserById(id);
             _dbContext.Users.Remove(_user!);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<User> getUserById(int id)
+        public async Task<User> GetUserById(int id)
         {
             var _user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == id);
             return _user;
         }
 
-        public async Task<List<User>> searchUser(string key)
+        public async Task<List<User>> SearchUser(string key)
         {
             var result = await _dbContext.Users.Where(e => e.Username!.Contains(key)).ToListAsync();
             return result;
         }
 
-        public async Task<ICollection<User>> getAll()
+        public async Task<ICollection<User>> GetAll()
         {
             var result = await _dbContext.Users.ToListAsync();
             return result;
@@ -60,12 +61,28 @@ namespace PetGrooming_Management_System.Repositories
         public async Task<User> GetUserByUsername(string username)
         {
             var _user = await _dbContext.Users.FirstOrDefaultAsync(e => e.Username!.Equals(username));
-            return _user!;
+            return _user;
         }
 
-        public bool verifyPassword(User user,  string password)
+        public bool VerifyPassword(User user,  string password)
         {
             return BCrypt.Net.BCrypt.Verify(password, user.Password);
+        }
+
+        public void ModifyUser(int id, ProfileRequest request)
+        {
+            // UploadFile cho avatar 
+            var avatarPath = UploadFile.GetFilePath(request.AvatarPath!);
+           
+            var _user = this.GetUserById(id);
+            _user.Result.FullName = request.FullName;
+            _user.Result.Email = request.Email;
+            _user.Result.Address = request.Address;
+            _user.Result.PhoneNumber = request.PhoneNumber;
+            _user.Result.AvatarPath = avatarPath;
+            _user.Result.DateOfBirth = request.DateOfBirth;
+            _user.Result.CreatedDate = DateTime.UtcNow;
+            _dbContext.SaveChanges();
         }
     }
 }
