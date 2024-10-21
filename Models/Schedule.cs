@@ -8,8 +8,7 @@ namespace PetGrooming_Management_System.Models
     {
         [Key]
         public int Id_Schedule { get; set; }
-        public DateTime DateCreated { get; set; }
-        public bool IsApprove { get; set; }
+        public List<EmployeeShift> EmployeeShifts { get; } = new List<EmployeeShift>(); 
 
     }
 }
