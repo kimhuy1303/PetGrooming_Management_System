@@ -61,12 +61,12 @@ namespace PetGrooming_Management_System.Controllers
                 };
                 var res = await _userRepository.CreateUser(newUser);
                 if (!res) return BadRequest("Create failed"); 
-                else return Ok("Create successful");  
+                else return Ok("Creating successful");  
 
             }catch(Exception e)
             {
                 _logger.LogError(e.Message, "Register errored");
-                return BadRequest("Register errored");
+                return BadRequest("Registering errored");
             }
 
         }

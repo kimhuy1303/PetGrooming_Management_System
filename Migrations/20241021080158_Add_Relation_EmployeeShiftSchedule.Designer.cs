@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PetGrooming_Management_System.Data;
 
@@ -11,9 +12,11 @@ using PetGrooming_Management_System.Data;
 namespace PetGrooming_Management_System.Migrations
 {
     [DbContext(typeof(MainDBContext))]
-    partial class MainDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241021080158_Add_Relation_EmployeeShiftSchedule")]
+    partial class Add_Relation_EmployeeShiftSchedule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -62,15 +65,7 @@ namespace PetGrooming_Management_System.Migrations
                     b.Property<int>("ShiftId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("ScheduleId")
-                        .HasColumnType("int");
-
                     b.HasKey("EmployeeId", "ShiftId");
-
-                    b.HasIndex("ScheduleId");
 
                     b.HasIndex("ShiftId");
 
@@ -85,7 +80,28 @@ namespace PetGrooming_Management_System.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id_Schedule"));
 
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("EmployeeShiftEmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("EmployeeShiftShiftId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ShiftId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id_Schedule");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ShiftId");
+
+                    b.HasIndex("EmployeeShiftEmployeeId", "EmployeeShiftShiftId");
 
                     b.ToTable("Schedule");
                 });
@@ -231,22 +247,39 @@ namespace PetGrooming_Management_System.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PetGrooming_Management_System.Models.Schedule", "Schedule")
-                        .WithMany("EmployeeShifts")
-                        .HasForeignKey("ScheduleId");
-
                     b.HasOne("PetGrooming_Management_System.Models.Shift", null)
                         .WithMany()
                         .HasForeignKey("ShiftId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Schedule");
                 });
 
             modelBuilder.Entity("PetGrooming_Management_System.Models.Schedule", b =>
                 {
-                    b.Navigation("EmployeeShifts");
+                    b.HasOne("PetGrooming_Management_System.Models.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetGrooming_Management_System.Models.Shift", "Shift")
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetGrooming_Management_System.Models.EmployeeShift", null)
+                        .WithMany("Schedules")
+                        .HasForeignKey("EmployeeShiftEmployeeId", "EmployeeShiftShiftId");
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Shift");
+                });
+
+            modelBuilder.Entity("PetGrooming_Management_System.Models.EmployeeShift", b =>
+                {
+                    b.Navigation("Schedules");
                 });
 #pragma warning restore 612, 618
         }

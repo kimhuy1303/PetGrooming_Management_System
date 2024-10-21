@@ -11,8 +11,8 @@ namespace PetGrooming_Management_System.Models
         public int TimeSlot { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
-        
 
+        public List<Employee> Employees { get; } = [];
 
     }
 }

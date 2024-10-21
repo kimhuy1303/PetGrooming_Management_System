@@ -38,7 +38,7 @@ namespace PetGrooming_Management_System.Controllers
 
             if (employee == null)
             {
-                return NotFound("Employee not found");
+                return NotFound("Employee does not found!");
             }
 
             return Ok(employee);
@@ -55,7 +55,7 @@ namespace PetGrooming_Management_System.Controllers
                 return BadRequest("Employee does not exist to modify!");
             }
             await _employeeRepository.ModifyProfileEmployee(id, employee);
-            return Ok("Modify employee successfully!");
+            return Ok("Modifying employee successfully!");
         }
 
         // POST: api/Employees
@@ -66,7 +66,7 @@ namespace PetGrooming_Management_System.Controllers
             var _employee = await _employeeRepository.GetEmployeeByIdenNumber(employee.IdentificationNumber!);
             if (_employee != null) return BadRequest("Employee has existed");
             await _employeeRepository.AddEmployee(employee);
-            return Ok("Add employee successfully");
+            return Ok("Adding employee successfully");
         }
 
         // DELETE: api/Employees/5
@@ -74,7 +74,7 @@ namespace PetGrooming_Management_System.Controllers
         public async Task<IActionResult> DeleteEmployee(int id)
         {
             await _employeeRepository.DeleteEmployee(id);
-            return Ok("Delete employee successfully");
+            return Ok("Deleting employee successfully");
         }
 
     }

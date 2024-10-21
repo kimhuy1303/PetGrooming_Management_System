@@ -44,17 +44,17 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task<ICollection<Employee>> GetAllEmployees()
         {
-            return await _dbcontext!.Employees.ToListAsync();
+            return await _dbcontext!.Employees.Include(employee => employee.Shifts).ToListAsync();
         }
 
         public async Task<Employee> GetEmployeeById(int id)
         {
-            return await _dbcontext!.Employees.FirstOrDefaultAsync(x => x.Id == id);
+            return await _dbcontext!.Employees.Include(employee=> employee.Shifts).FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task<Employee> GetEmployeeByIdenNumber(string idenNumber)
         {
-            return await _dbcontext!.Employees.FirstOrDefaultAsync(x => x.IdentificationNumber.Equals(idenNumber));
+            return await _dbcontext!.Employees.Include(employee => employee.Shifts).FirstOrDefaultAsync(x => x.IdentificationNumber.Equals(idenNumber));
         }
 
         public async Task ModifyProfileEmployee(int id, EmployeeProfileRequest profile)
@@ -66,6 +66,18 @@ namespace PetGrooming_Management_System.Repositories
             _employee.PhoneNumber = profile.PhoneNumber;
             _employee.Email = profile.Email;
             _employee.IdentificationNumber = profile.IdentificationNumber;
+            await _dbcontext!.SaveChangesAsync();
+        }
+
+        public async Task RegisterShift(RegisterShiftRequest registerShiftdto)
+        {
+            var assignedShift = new EmployeeShift
+            {
+                EmployeeId = registerShiftdto.IdEmployee,
+                ShiftId = registerShiftdto.IdShift,
+                Date = registerShiftdto.Date
+            };
+            await _dbcontext!.EmployeeShifts.AddAsync(assignedShift);
             await _dbcontext!.SaveChangesAsync();
         }
     }

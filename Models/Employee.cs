@@ -13,5 +13,8 @@
         public int TotalWorkHours { get; set; } 
         public bool WorkStatus { get; set; }
         public bool IsWorking { get; set; }
+
+        public List<Shift> Shifts { get; } = [];
+
     }
 }

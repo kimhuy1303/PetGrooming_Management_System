@@ -14,6 +14,7 @@ namespace PetGrooming_Management_System.Data
         public DbSet<Shift> Shifts { get; set; }
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
+        public DbSet<EmployeeShift> EmployeeShifts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -43,6 +44,16 @@ namespace PetGrooming_Management_System.Data
                 new Shift {Id_Shift=1, TimeSlot = 1, StartTime = new TimeOnly(8, 0), EndTime = new TimeOnly(12, 0) },
                 new Shift {Id_Shift=2, TimeSlot = 2, StartTime = new TimeOnly(13, 0), EndTime = new TimeOnly(17, 0) }
             );
+
+            // Many to Many
+            // Employee - Shift
+            modelBuilder.Entity<Employee>()
+                .HasMany(e => e.Shifts)
+                .WithMany(e => e.Employees)
+                .UsingEntity<EmployeeShift>(
+                    r => r.HasOne<Shift>().WithMany().HasForeignKey(e => e.ShiftId),
+                    l => l.HasOne<Employee>().WithMany().HasForeignKey(e => e.EmployeeId)
+                );
         }
     }
 }
