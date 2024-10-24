@@ -12,6 +12,17 @@ namespace PetGrooming_Management_System.Repositories
         {
             _dbContext = dbContext;
         }
+
+        public Task CreateSchedule()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task EditSchedule(int id)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<ICollection<Schedule>> GetAllSchedules()
         {
             return await _dbContext.Schedules

@@ -1,4 +1,5 @@
-﻿using PetGrooming_Management_System.Models;
+﻿using PetGrooming_Management_System.DTOs.Respones;
+using PetGrooming_Management_System.Models;
 
 namespace PetGrooming_Management_System.IRepositories
 {

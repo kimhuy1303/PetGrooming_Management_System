@@ -51,7 +51,7 @@ namespace PetGrooming_Management_System.Controllers
             try
             {
                 var check = await _userRepository.GetUserByUsername(registerDTO.Username!);
-                if (check == null) { return BadRequest("Username already exists!"); }
+                if (check != null) { return BadRequest("Username already exists!"); }
                 if (!registerDTO.Password!.Equals(registerDTO.ConfirmPassword)) return BadRequest("Passwords do not match!");
                 var newUser = new UserRequest
                 {

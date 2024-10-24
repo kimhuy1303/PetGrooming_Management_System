@@ -7,12 +7,13 @@ namespace PetGrooming_Management_System.Models
     public class Shift
     {
         [Key]
-        public int Id_Shift { get; set; }
+        public int Id { get; set; }
         public int TimeSlot { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
 
-        public List<Employee> Employees { get; } = [];
+        // Navigate
+        public List<EmployeeShift> EmployeeShifts { get; set; } = new List<EmployeeShift>();
 
     }
 }

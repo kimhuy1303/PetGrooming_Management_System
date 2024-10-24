@@ -27,8 +27,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
+builder.Services.AddScoped<IEmployeeShiftRepository, EmployeeShiftRepository>();
 builder.Services.AddScoped<JWTService>();
-
 
 // Connect Database
 var connection = builder.Configuration.GetConnectionString("ConnectDb");
@@ -41,13 +41,9 @@ builder.Services.AddCors(p => p.AddPolicy("MyCors", build =>
 }));
 
 // Add JWT Authentication
-builder.Services.AddAuthentication(options => {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
     {
-        options.SaveToken = true;
-        options.TokenValidationParameters = new TokenValidationParameters()
+        options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
@@ -55,19 +51,20 @@ builder.Services.AddAuthentication(options => {
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["jwt:Issuer"],
             ValidAudience = builder.Configuration["jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[("jwt:Key")]))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[("jwt:Key")]!))
         };
 });
 
 // Swagger
 builder.Services.AddSwaggerGen(option =>
 {
+    option.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
     option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
         Description = "Please enter a valid token",
         Name = "Authorization",
-        Type = SecuritySchemeType.Http,
+        Type = SecuritySchemeType.ApiKey,
         BearerFormat = "JWT",
         Scheme = "Bearer"
     });
@@ -80,29 +77,33 @@ builder.Services.AddSwaggerGen(option =>
                 {
                     Type=ReferenceType.SecurityScheme,
                     Id="Bearer"
-                }
+                },
+                Name = "Bearer",
+                In = ParameterLocation.Header,
+                Scheme = "oauth2"
             },
-            new string[]{}
+            new List<String>()
         }
     });
 });
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
+    });
 }
 
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-app.UseAuthentication();
-app.UseCors("MyCors");
-
 app.MapControllers();
+app.UseCors("MyCors");
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();

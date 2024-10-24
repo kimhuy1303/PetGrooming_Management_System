@@ -48,7 +48,7 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task<List<User>> SearchUser(string key)
         {
-            var result = await _dbContext.Users.Where(e => e.Username!.Contains(key)).ToListAsync();
+            var result = await _dbContext.Users.Where(e => e.Username!.Contains(key) || e.FullName!.Contains(key) || e.Email!.Contains(key)).ToListAsync();
             return result;
         }
 
@@ -78,10 +78,10 @@ namespace PetGrooming_Management_System.Repositories
             _user.Result.FullName = request.FullName;
             _user.Result.Email = request.Email;
             _user.Result.Address = request.Address;
+            _user.Result.Gender = request.Gender;
             _user.Result.PhoneNumber = request.PhoneNumber;
             _user.Result.AvatarPath = avatarPath;
             _user.Result.DateOfBirth = request.DateOfBirth;
-            _user.Result.CreatedDate = DateTime.UtcNow;
             _dbContext.SaveChanges();
         }
     }

@@ -6,5 +6,8 @@ namespace PetGrooming_Management_System.IRepositories
         Task<ICollection<Schedule>> GetSchedulesByDate(DateTime date);
         Task<ICollection<Schedule>> GetSchedulesByEmployeeId(int id);
         Task<ICollection<Schedule>> GetAllSchedules();
+
+        Task EditSchedule(int id);
+        Task CreateSchedule();
     }
 }

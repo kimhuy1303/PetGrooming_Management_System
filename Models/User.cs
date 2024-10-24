@@ -22,10 +22,15 @@ namespace PetGrooming_Management_System.Models
         public string? Email { get; set; }
         [StringLength(20)]
         public string? PhoneNumber { get; set; }
+        public string? Gender { get; set; }
         public string? Address { get; set; }
         public DateTime? DateOfBirth { get; set; }
 
         public Role Role { get; set; } = Role.Customer;
         public DateTime CreatedDate { get; set; }
+
+        // Navigate
+        public List<Appointment>? ListAppointments { get; } = new List<Appointment>();
+        public List<UserAnnouncements> UserAnnouncements { get; } = new List<UserAnnouncements>();
     }
 }
