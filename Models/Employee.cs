@@ -14,7 +14,9 @@
         public bool WorkStatus { get; set; }
         public bool IsWorking { get; set; }
 
-        public List<Shift> Shifts { get; } = [];
+        // Navigate
+        public List<EmployeeShift> EmployeeShifts { get; set; } = new List<EmployeeShift>();
+        public List<AppointmentDetail> AppointmentDetail { get; } = new List<AppointmentDetail>();
 
     }
 }

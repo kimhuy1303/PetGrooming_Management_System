@@ -7,7 +7,11 @@ namespace PetGrooming_Management_System.Models
     public class Schedule
     {
         [Key]
-        public int Id_Schedule { get; set; }
+        public int Id { get; set; }
+        public DateTime DateStart { get; set; }
+        public DateTime DateEnd { get; set; }
+
+        // Navigate
         public List<EmployeeShift> EmployeeShifts { get; } = new List<EmployeeShift>(); 
 
     }

@@ -18,7 +18,8 @@ namespace PetGrooming_Management_System.Services
         }
         public string generateJwtToken(string userId, Role role, string phoneNumber)
         {
-            var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]));
+            var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]!));
+            var tokenHandler = new JwtSecurityTokenHandler();
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
@@ -27,15 +28,21 @@ namespace PetGrooming_Management_System.Services
             };
             var signin = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var token = new JwtSecurityToken(
-                    _configuration["jwt:Issuer"],
-                    _configuration["jwt:Audience"],
-                    claims,
-                    expires: DateTime.UtcNow.AddMinutes(60),
-                    signingCredentials: signin
-                );
-            string tokenvalue = new JwtSecurityTokenHandler().WriteToken(token);
-            return tokenvalue;
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                //_configuration["jwt:Issuer"],
+                //_configuration["jwt:Audience"],
+                //claims,
+                //expires: DateTime.UtcNow.AddMinutes(60),
+                //signingCredentials: signin
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddMinutes(60),
+                Audience = _configuration["jwt:Audience"],
+                Issuer = _configuration["jwt:Issuer"],
+                SigningCredentials = signin
+            };
+            var tokenvalue = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(tokenvalue);
         }
     }
 }

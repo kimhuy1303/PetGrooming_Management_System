@@ -24,6 +24,7 @@ namespace PetGrooming_Management_System.Repositories
                 Password = BCrypt.Net.BCrypt.HashPassword(employeeDTO.Password),
                 FullName = employeeDTO.FullName,
                 PhoneNumber = employeeDTO.PhoneNumber,
+                Gender = employeeDTO.Gender,
                 IdentificationNumber = employeeDTO.IdentificationNumber,
                 Address = employeeDTO.Address,
                 Email = employeeDTO.Email,
@@ -44,17 +45,17 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task<ICollection<Employee>> GetAllEmployees()
         {
-            return await _dbcontext!.Employees.Include(employee => employee.Shifts).ToListAsync();
+            return await _dbcontext!.Employees.Include(employee => employee.EmployeeShifts).ThenInclude(e=> e.Shift).ToListAsync();
         }
 
         public async Task<Employee> GetEmployeeById(int id)
         {
-            return await _dbcontext!.Employees.Include(employee=> employee.Shifts).FirstOrDefaultAsync(x => x.Id == id);
+            return await _dbcontext!.Employees.Include(employee => employee.EmployeeShifts).ThenInclude(e => e.Shift).FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task<Employee> GetEmployeeByIdenNumber(string idenNumber)
         {
-            return await _dbcontext!.Employees.Include(employee => employee.Shifts).FirstOrDefaultAsync(x => x.IdentificationNumber.Equals(idenNumber));
+            return await _dbcontext!.Employees.Include(employee => employee.EmployeeShifts).ThenInclude(e => e.Shift).FirstOrDefaultAsync(x => x.IdentificationNumber.Equals(idenNumber));
         }
 
         public async Task ModifyProfileEmployee(int id, EmployeeProfileRequest profile)
@@ -63,22 +64,13 @@ namespace PetGrooming_Management_System.Repositories
             _employee.AvatarPath = UploadFile.GetFilePath(profile.AvatarPath!);
             _employee.DateOfBirth = profile.DateOfBirth;
             _employee.Address = profile.Address;
+            _employee.Gender = profile.Gender;
             _employee.PhoneNumber = profile.PhoneNumber;
             _employee.Email = profile.Email;
             _employee.IdentificationNumber = profile.IdentificationNumber;
             await _dbcontext!.SaveChangesAsync();
         }
 
-        public async Task RegisterShift(RegisterShiftRequest registerShiftdto)
-        {
-            var assignedShift = new EmployeeShift
-            {
-                EmployeeId = registerShiftdto.IdEmployee,
-                ShiftId = registerShiftdto.IdShift,
-                Date = registerShiftdto.Date
-            };
-            await _dbcontext!.EmployeeShifts.AddAsync(assignedShift);
-            await _dbcontext!.SaveChangesAsync();
-        }
+        
     }
 }

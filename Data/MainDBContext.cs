@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using PetGrooming_Management_System.Models;
 
 namespace PetGrooming_Management_System.Data
@@ -16,8 +17,18 @@ namespace PetGrooming_Management_System.Data
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<EmployeeShift> EmployeeShifts { get; set; }
 
+        public DbSet<Annoucement> Annoucements { get; set; }
+        public DbSet<Service> Services { get; set; }
+        public DbSet<Combo> Combos { get; set; }
+        public DbSet<AppointmentDetail> AppointmentDetails { get; set; }
+        public DbSet<ComboServices> ComboServices { get; set; }
+        public DbSet<UserAnnouncements> UserAnnouncements { get; set; }
+        
+        
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            
             // inheritance of User table
             modelBuilder.Entity<User>()
                 .HasDiscriminator<String>("UserType")
@@ -37,23 +48,58 @@ namespace PetGrooming_Management_System.Data
             modelBuilder.Entity<Employee>()
                 .Property(e => e.IsWorking)
                 .HasDefaultValue(false);
+            modelBuilder.Entity<UserAnnouncements>()
+                .Property(e => e.HasRead)
+                .HasDefaultValue(false);
 
             // Seeding data
             modelBuilder.Entity<Shift>()
                 .HasData(
-                new Shift {Id_Shift=1, TimeSlot = 1, StartTime = new TimeOnly(8, 0), EndTime = new TimeOnly(12, 0) },
-                new Shift {Id_Shift=2, TimeSlot = 2, StartTime = new TimeOnly(13, 0), EndTime = new TimeOnly(17, 0) }
+                new Shift {Id=1, TimeSlot = 1, StartTime = new TimeOnly(8, 0), EndTime = new TimeOnly(12, 0) },
+                new Shift {Id=2, TimeSlot = 2, StartTime = new TimeOnly(13, 0), EndTime = new TimeOnly(17, 0) }
             );
 
             // Many to Many
             // Employee - Shift
-            modelBuilder.Entity<Employee>()
-                .HasMany(e => e.Shifts)
-                .WithMany(e => e.Employees)
-                .UsingEntity<EmployeeShift>(
-                    r => r.HasOne<Shift>().WithMany().HasForeignKey(e => e.ShiftId),
-                    l => l.HasOne<Employee>().WithMany().HasForeignKey(e => e.EmployeeId)
-                );
+            modelBuilder.Entity<EmployeeShift>()
+                .HasKey(e => new { e.EmployeeId, e.ShiftId, e.Date });
+            modelBuilder.Entity<EmployeeShift>()
+                .HasOne(e => e.Employee)
+                .WithMany(e => e.EmployeeShifts)
+                .HasForeignKey(e => e.EmployeeId);
+            modelBuilder.Entity<EmployeeShift>()
+                .HasOne(e => e.Shift)
+                .WithMany(e => e.EmployeeShifts)
+                .HasForeignKey(e => e.ShiftId);
+            modelBuilder.Entity<EmployeeShift>()
+                .HasIndex(e => new { e.EmployeeId, e.ShiftId, e.Date})
+                .IsUnique();
+
+            // User - Announcement
+            modelBuilder.Entity<UserAnnouncements>()
+                .HasKey(e => new { e.UserId, e.AnnoucementId });
+            modelBuilder.Entity<UserAnnouncements>()
+                .HasOne(e => e.User)
+                .WithMany(e => e.UserAnnouncements)
+                .HasForeignKey(e => e.UserId);
+            modelBuilder.Entity<UserAnnouncements>()
+                .HasOne(e => e.Annoucement)
+                .WithMany(e => e.UserAnnouncements)
+                .HasForeignKey(e=> e.AnnoucementId);
+
+            // Service - Combo
+            modelBuilder.Entity<ComboServices>()
+                .HasKey(e => new { e.ServiceId, e.ComboId });
+            modelBuilder.Entity<ComboServices>()
+                .HasOne(e => e.Service)
+                .WithMany(e => e.ComboServices)
+                .HasForeignKey(e => e.ServiceId);
+            modelBuilder.Entity<ComboServices>()
+                .HasOne(e => e.Combo)
+                .WithMany(e => e.ComboServices)
+                .HasForeignKey(e => e.ComboId);
+            
+            base.OnModelCreating(modelBuilder);
         }
     }
 }
