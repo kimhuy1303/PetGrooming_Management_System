@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
 using PetGrooming_Management_System.IRepositories;
@@ -28,9 +29,11 @@ namespace PetGrooming_Management_System.Controllers
         // GET: api/Employees
         [HttpGet]
         
-        public async Task<ICollection<Employee>> GetEmployees()
+        public async Task<ActionResult<ICollection<Employee>>> GetEmployees()
         {
-            return await _employeeRepository.GetAllEmployees();
+            var listEmployees = await _employeeRepository.GetAllEmployees();
+            if (listEmployees.IsNullOrEmpty()) return BadRequest("List employees are null or empty!");
+            return Ok(listEmployees);
         }
 
         // GET: api/Employees/5
