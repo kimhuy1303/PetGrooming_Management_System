@@ -27,21 +27,7 @@ namespace PetGrooming_Management_System.Controllers
             _employeeRepository = employeeRepository;
         }
 
-        [HttpGet("Shifts")]
-        [Authorize(Roles = "Employee")]
-        public async Task<ICollection<Shift>> GetAllShifts()
-        {
-            return await _shiftRepository.GetAllShifts();
-        }
-
-        [HttpGet("Shift/{id}")]
-        [Authorize(Roles = "Employee")]
-        public async Task<ActionResult<Shift>> GetShift(int id) 
-        {
-            var shift = await _shiftRepository.GetShiftById(id);
-            if(shift == null) return NotFound("Shift does not exist!");
-            return Ok(shift);
-        }
+        
 
         [HttpPost("RegisterShift")]
         [Authorize(Roles = "Employee")]
@@ -66,7 +52,7 @@ namespace PetGrooming_Management_System.Controllers
         }
 
         [HttpDelete()]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "Manager")]
         public async Task<ActionResult> DeleteShift([FromBody] EmployeeShiftRequest employeeShiftRequest)
         {
             var result = await _employeeShiftRepository.DeleteEmployeeShift(employeeShiftRequest);
