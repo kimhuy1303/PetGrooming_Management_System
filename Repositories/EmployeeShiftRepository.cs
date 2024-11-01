@@ -75,5 +75,11 @@ namespace PetGrooming_Management_System.Repositories
             // Handling
             return true;
         }
+
+        public async Task<ICollection<EmployeeShift>> GetEmployeeShiftsByDay(int day)
+        {
+            var res = await _dbcontext.EmployeeShifts.Where(e => e.Date.Day == day).ToListAsync();
+            return res;
+        }
     }
 }

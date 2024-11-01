@@ -13,7 +13,6 @@ namespace PetGrooming_Management_System.Data
         public DbSet<Manager> Managers { get; set; }
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Shift> Shifts { get; set; }
-        public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<EmployeeShift> EmployeeShifts { get; set; }
 
@@ -24,7 +23,7 @@ namespace PetGrooming_Management_System.Data
         public DbSet<ComboServices> ComboServices { get; set; }
         public DbSet<UserAnnouncements> UserAnnouncements { get; set; }
         
-        
+        public DbSet<Price> Prices { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,9 +35,6 @@ namespace PetGrooming_Management_System.Data
                 .HasValue<Manager>("Manager");
 
             // Set default value
-            modelBuilder.Entity<Employee>()
-                .Property(e => e.TotalAppointment)
-                .HasDefaultValue(0);
             modelBuilder.Entity<Employee>()
                 .Property(e => e.TotalWorkHours)
                 .HasDefaultValue(0);
@@ -98,8 +94,23 @@ namespace PetGrooming_Management_System.Data
                 .HasOne(e => e.Combo)
                 .WithMany(e => e.ComboServices)
                 .HasForeignKey(e => e.ComboId);
-            
+
+            // Service - AppointmentDetail
+            modelBuilder.Entity<AppointmentService>()
+                .HasKey(e => new { e.AppointmentDetailId, e.ServiceId });
+            modelBuilder.Entity<AppointmentService>()
+                .HasOne(e => e.AppointmentDetail)
+                .WithMany (e => e.AppointmentServices)
+                .HasForeignKey(e => e.AppointmentDetailId);
+            modelBuilder.Entity<AppointmentService>()
+                .HasOne(e => e.Service)
+                .WithMany(e => e.AppointmentServices)
+                .HasForeignKey (e => e.ServiceId);
+
+
+                
             base.OnModelCreating(modelBuilder);
+
         }
     }
 }
