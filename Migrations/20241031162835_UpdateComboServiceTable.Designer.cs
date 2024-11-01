@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PetGrooming_Management_System.Data;
 
@@ -11,9 +12,11 @@ using PetGrooming_Management_System.Data;
 namespace PetGrooming_Management_System.Migrations
 {
     [DbContext(typeof(MainDBContext))]
-    partial class MainDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241031162835_UpdateComboServiceTable")]
+    partial class UpdateComboServiceTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -145,12 +148,6 @@ namespace PetGrooming_Management_System.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
@@ -188,7 +185,12 @@ namespace PetGrooming_Management_System.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("ScheduleId")
+                        .HasColumnType("int");
+
                     b.HasKey("EmployeeId", "ShiftId", "Date");
+
+                    b.HasIndex("ScheduleId");
 
                     b.HasIndex("ShiftId");
 
@@ -198,7 +200,7 @@ namespace PetGrooming_Management_System.Migrations
                     b.ToTable("EmployeeShifts");
                 });
 
-            modelBuilder.Entity("PetGrooming_Management_System.Models.Price", b =>
+            modelBuilder.Entity("PetGrooming_Management_System.Models.Schedule", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -206,25 +208,15 @@ namespace PetGrooming_Management_System.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("PetName")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("DateEnd")
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("PetWeight")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("PriceValue")
-                        .HasColumnType("float");
-
-                    b.Property<int?>("ServiceId")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("DateStart")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ServiceId")
-                        .IsUnique()
-                        .HasFilter("[ServiceId] IS NOT NULL");
-
-                    b.ToTable("Price");
+                    b.ToTable("Schedule");
                 });
 
             modelBuilder.Entity("PetGrooming_Management_System.Models.Service", b =>
@@ -235,19 +227,33 @@ namespace PetGrooming_Management_System.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("ComboId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("DateCreated")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsActive")
+                    b.Property<bool?>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<string>("PetName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Price")
+                        .HasColumnType("float");
 
                     b.Property<string>("ServiceName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("WeightPet")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ComboId");
 
                     b.ToTable("Service");
                 });
@@ -383,6 +389,11 @@ namespace PetGrooming_Management_System.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
+                    b.Property<int>("TotalAppointment")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<int>("TotalWorkHours")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -479,6 +490,10 @@ namespace PetGrooming_Management_System.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("PetGrooming_Management_System.Models.Schedule", "Schedule")
+                        .WithMany("EmployeeShifts")
+                        .HasForeignKey("ScheduleId");
+
                     b.HasOne("PetGrooming_Management_System.Models.Shift", "Shift")
                         .WithMany("EmployeeShifts")
                         .HasForeignKey("ShiftId")
@@ -487,16 +502,16 @@ namespace PetGrooming_Management_System.Migrations
 
                     b.Navigation("Employee");
 
+                    b.Navigation("Schedule");
+
                     b.Navigation("Shift");
                 });
 
-            modelBuilder.Entity("PetGrooming_Management_System.Models.Price", b =>
+            modelBuilder.Entity("PetGrooming_Management_System.Models.Service", b =>
                 {
-                    b.HasOne("PetGrooming_Management_System.Models.Service", "Service")
-                        .WithOne("Price")
-                        .HasForeignKey("PetGrooming_Management_System.Models.Price", "ServiceId");
-
-                    b.Navigation("Service");
+                    b.HasOne("PetGrooming_Management_System.Models.Combo", null)
+                        .WithMany("ListServices")
+                        .HasForeignKey("ComboId");
                 });
 
             modelBuilder.Entity("PetGrooming_Management_System.Models.UserAnnouncements", b =>
@@ -538,6 +553,13 @@ namespace PetGrooming_Management_System.Migrations
                     b.Navigation("AppointmentDetail");
 
                     b.Navigation("ComboServices");
+
+                    b.Navigation("ListServices");
+                });
+
+            modelBuilder.Entity("PetGrooming_Management_System.Models.Schedule", b =>
+                {
+                    b.Navigation("EmployeeShifts");
                 });
 
             modelBuilder.Entity("PetGrooming_Management_System.Models.Service", b =>
@@ -545,8 +567,6 @@ namespace PetGrooming_Management_System.Migrations
                     b.Navigation("AppointmentServices");
 
                     b.Navigation("ComboServices");
-
-                    b.Navigation("Price");
                 });
 
             modelBuilder.Entity("PetGrooming_Management_System.Models.Shift", b =>

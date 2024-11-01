@@ -19,7 +19,7 @@ namespace PetGrooming_Management_System.Models
 
         public int? ComboId { get; set; }
         public Combo? Combo { get; set; }
-        public List<Service> Services { get; set; } = new List<Service>();
+        public List<AppointmentService> AppointmentServices { get; set; } = new List<AppointmentService>();
 
     }
 }

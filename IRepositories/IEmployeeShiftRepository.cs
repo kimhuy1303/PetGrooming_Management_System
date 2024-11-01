@@ -11,5 +11,7 @@ namespace PetGrooming_Management_System.IRepositories
 
         Task<Boolean> DeleteEmployeeShift(EmployeeShiftRequest employeeShiftRequest);
         Task<Boolean> UpdateEmployeeShift(EmployeeShiftRequest registerShiftdto);
+
+        Task<ICollection<EmployeeShift>> GetEmployeeShiftsByDay(int day);
     }
 }
