@@ -9,9 +9,15 @@ namespace PetGrooming_Management_System.IRepositories
     {
         Task<ICollection<Service>> GetAllServices();
         Task<Service> GetServiceById(int id);
+        Task<Service> GetServiceByName(string name);
         Task<Boolean> DeleteService(Service service);
-        Task<Boolean> UpdateService(Service service, ServiceRequest servicedto);
-        Task<Boolean> CreateService(ServiceRequest servicedto);
+        Task<Service> UpdateService(Service service, ServiceRequest servicedto);
+        Task<Service> CreateService(ServiceRequest servicedto);
         Task<ICollection<Service>> SearchService(string key);
+
+        Task ActiveService(int id);
+        Task<ICollection<Service>> SortService(string sortString);
+        Task<Boolean> IsServiceExist(int id, PriceRequest pricedto);
+
     }
 }

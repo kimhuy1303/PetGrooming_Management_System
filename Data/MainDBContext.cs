@@ -55,6 +55,8 @@ namespace PetGrooming_Management_System.Data
                 new Shift {Id=2, TimeSlot = 2, StartTime = new TimeOnly(13, 0), EndTime = new TimeOnly(17, 0) }
             );
 
+            
+
             // Many to Many
             // Employee - Shift
             modelBuilder.Entity<EmployeeShift>()

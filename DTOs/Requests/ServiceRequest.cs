@@ -6,4 +6,11 @@
         public string? Description { get; set; }
         
     }
+
+    public class PriceRequest
+    {
+        public string? PetName { get; set; }
+        public string? PetWeight { get; set; }
+        public double PriceValue { get; set; }
+    }
 }
