@@ -7,11 +7,13 @@ namespace PetGrooming_Management_System.IRepositories
     {
         Task<ICollection<Combo>> GetAllCombos();
         Task<Combo> GetComboById(int id);
-        Task<Boolean> CreateCombo(ComboRequest combodto);
-        Task<Boolean> UpdateCombo(Combo combo, ComboRequest combodto);
-        Task<Boolean> DeleteCombo(int id);
+        Task<Combo> GetComboByName(string name);
+        Task<Combo> CreateCombo(ComboRequest combodto);
+        Task<Combo> UpdateCombo(Combo combo, ComboRequest combodto);
+        Task DeleteCombo(int id);
 
-        Task<Boolean> AddServicesToCombo(ComboServiceRequest listservicesdto);
+        Task<Combo> AddServicesToCombo(ComboServiceRequest listservicesdto);
+        Task DiscountCombo(Combo combo, List<int> numberOfServices);
 
     }
 }

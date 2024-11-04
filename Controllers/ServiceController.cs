@@ -38,6 +38,14 @@ namespace PetGrooming_Management_System.Controllers
             if (service == null) return NotFound();
             return Ok(service);
         }
+        [HttpGet("By-Pet")]
+        public async Task<ActionResult<Service>> GetServicesByPet(string petName, string petWeight)
+        {
+            if (petName.IsNullOrEmpty()|| petWeight.IsNullOrEmpty()) return BadRequest(ModelState);
+            var services = await _serviceRepository.GetServicesByPet(petName, petWeight);
+            if (services.IsNullOrEmpty()) return NotFound();
+            return Ok(services);
+        }
 
         [HttpPost]
         [Authorize(Roles = "Manager")]

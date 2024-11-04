@@ -65,6 +65,23 @@ namespace PetGrooming_Management_System.Repositories
                 .FirstOrDefaultAsync(e => e.ServiceName.Equals(name));
         }
 
+        public async Task<Service> GetServiceByPet(int id, string petName, string petWeight)
+        {
+            return await _dbContext.Services
+                .Include(e => e.Prices
+                               .Where(e => e.PetName.Equals(petName)
+                                     && e.PetWeight.Equals(petWeight)))
+                .FirstOrDefaultAsync(e => e.Id == id);
+        }
+        
+        public async Task<ICollection<Service>> GetServicesByPet(string petName, string petWeight)
+        {
+            return await _dbContext.Services
+                .Where(price => price.Prices.Any(e => e.PetName == petName && e.PetWeight == petWeight))
+                .ToListAsync()
+                ;
+        }
+
         public async Task<bool> IsServiceExist(int id, PriceRequest pricedto)
         {
             var price = await _priceRepository.IsPriceExist(pricedto);
