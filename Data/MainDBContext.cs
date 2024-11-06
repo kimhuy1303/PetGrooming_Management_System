@@ -109,8 +109,9 @@ namespace PetGrooming_Management_System.Data
                 .WithMany(e => e.AppointmentServices)
                 .HasForeignKey (e => e.ServiceId);
 
+            modelBuilder.Entity<ComboServices>()
+            .HasKey(cs => new { cs.ComboId, cs.ServiceId, cs.PetName, cs.PetWeight });
 
-                
             base.OnModelCreating(modelBuilder);
 
         }

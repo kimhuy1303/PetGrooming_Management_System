@@ -26,7 +26,7 @@ namespace PetGrooming_Management_System.Controllers
             if (res.IsNullOrEmpty()) return BadRequest("List price is empty or null");
             return Ok(res);
         }
-        [HttpPost]
+        [HttpPost("Adding-Price")]
         [Authorize(Roles = "Manager")]
         public async Task<ActionResult> AddPrice(int serviceId, [FromBody] PriceRequest pricedto)
         {
