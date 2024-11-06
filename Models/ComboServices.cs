@@ -7,6 +7,9 @@
 
         public int? ServiceId { get; set; }
         public Service? Service { get; set; }
+
+        public string? PetName { get; set; }
+        public string? PetWeight { get; set; }
         public double Price { get; set; }
     }
 }

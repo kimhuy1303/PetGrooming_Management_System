@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PetGrooming_Management_System.Data;
 
@@ -11,9 +12,11 @@ using PetGrooming_Management_System.Data;
 namespace PetGrooming_Management_System.Migrations
 {
     [DbContext(typeof(MainDBContext))]
-    partial class MainDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241106024931_fixComboServicesTable")]
+    partial class fixComboServicesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -161,24 +164,15 @@ namespace PetGrooming_Management_System.Migrations
 
             modelBuilder.Entity("PetGrooming_Management_System.Models.ComboServices", b =>
                 {
-                    b.Property<int?>("ComboId")
-                        .HasColumnType("int");
-
                     b.Property<int?>("ServiceId")
                         .HasColumnType("int");
 
-                    b.Property<string>("PetName")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int?>("ComboId")
+                        .HasColumnType("int");
 
-                    b.Property<string>("PetWeight")
-                        .HasColumnType("nvarchar(450)");
+                    b.HasKey("ServiceId", "ComboId");
 
-                    b.Property<double>("Price")
-                        .HasColumnType("float");
-
-                    b.HasKey("ComboId", "ServiceId", "PetName", "PetWeight");
-
-                    b.HasIndex("ServiceId");
+                    b.HasIndex("ComboId");
 
                     b.ToTable("ComboServices");
                 });

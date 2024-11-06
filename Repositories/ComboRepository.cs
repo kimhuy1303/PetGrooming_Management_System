@@ -4,6 +4,7 @@ using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
+using System.Collections.Immutable;
 
 namespace PetGrooming_Management_System.Repositories
 {
@@ -24,7 +25,7 @@ namespace PetGrooming_Management_System.Repositories
             
             foreach(int serviceId in listservicesdto.ListServicesId)
             {
-                var service = await _serviceRepository.GetServiceByPet(serviceId, listservicesdto.PetName, listservicesdto.PetWeight);
+                var service = await _serviceRepository.GetServiceById(serviceId);
                 if (service != null)
                 {
                     listService.Add(service);
@@ -32,17 +33,19 @@ namespace PetGrooming_Management_System.Repositories
             }
             foreach(Service s in listService)
             {
-                var totalPrice = s.Prices
-                    .Sum(p => p.PriceValue);
+                var price = s.Prices.FirstOrDefault(p => p.PetName == listservicesdto.PetName
+                                                      && p.PetWeight == listservicesdto.PetWeight);
                 var comboService = new ComboServices
                 {
-                    ComboId = combo.Id,
-                    ServiceId = s.Id,
-                    Price = totalPrice,
+                    Combo = combo,
+                    Service = s,
+                    PetName = listservicesdto.PetName,
+                    PetWeight = listservicesdto.PetWeight,
+                    Price = price.PriceValue
                 };
                 combo.ComboServices.Add(comboService);
             }
-            await DiscountCombo(combo, listservicesdto.ListServicesId);
+            
             await _dbContext.SaveChangesAsync();
             return combo;
         }
@@ -53,7 +56,8 @@ namespace PetGrooming_Management_System.Repositories
             {
                 Name = combodto.ComboName,
                 CreatedDate = DateTime.Now,
-                IsActive = false,
+                IsActive = combodto.IsActive,
+                
             };
             await _dbContext.Combos.AddAsync(newCombo);
             await _dbContext.SaveChangesAsync();
@@ -66,33 +70,54 @@ namespace PetGrooming_Management_System.Repositories
             _dbContext.Combos.Remove(combo);
             await _dbContext.SaveChangesAsync();
         }
-
-        public async Task DiscountCombo(Combo combo, List<int> numberOfServices)
+        public async static Task<double> DiscountCombo(int numberOfServices)
         {
-            var discount = 0;
-            switch (numberOfServices.Count())
+            double discount = 0.0;
+            switch (numberOfServices)
             {
                 case 2:
-                    discount = 10;
+                    discount = 0.1;
                     break;
                 case 3:
-                    discount = 15;
+                    discount = 0.15;
                     break;
                 case 4:
-                    discount = 20;
+                    discount = 0.2;
                     break;
                 default:
-                    discount = 0;
+                    discount = 0.0;
                     break;
 
             }
-            var comboService = combo.ComboServices.Find(e => e.ComboId == combo.Id);
-            comboService.Price = comboService.Price -  comboService.Price*(discount / 100);
+            return discount;
         }
-
-        public async Task<ICollection<Combo>> GetAllCombos()
+        public async Task<IEnumerable<object>> GetAllCombos()
         {
-            return await _dbContext.Combos.Include(e => e.ComboServices).ToListAsync();
+
+            return await _dbContext.Combos
+                .Select(e => new
+                {
+                    ComboId = e.Id,
+                    ComboName = e.Name,
+                    CreatedDate = e.CreatedDate,
+                    IsActive = e.IsActive,
+                    ComboServices = e.ComboServices
+                                .GroupBy(cs => new { cs.PetName, cs.PetWeight })
+                                .Select(g => new
+                                {
+                                    PetName = g.Key.PetName,
+                                    PetWeight = g.Key.PetWeight,
+                                    TotalPrice = g.Sum(cs => cs.Price),
+                                    DiscountPrice = g.Sum(cs => cs.Price) * (1.0 - DiscountCombo(g.Count()).Result),
+                                    Service =  g.Select(cs => new
+                                    {
+                                        ServiceId = cs.ServiceId,
+                                        ServiceName = cs.Service.ServiceName,
+                                        Price = cs.Price,
+                                    }).ToList()
+                                }).ToList()
+                })
+                .ToListAsync();
         }
 
         public async Task<Combo> GetComboById(int id)
@@ -105,6 +130,18 @@ namespace PetGrooming_Management_System.Repositories
             return await _dbContext.Combos.Include(e => e.ComboServices).FirstOrDefaultAsync(e => e.Name == name);
         }
 
+        public async Task<bool> RemoveServicesFromCombo(int comboId, int servicesId)
+        {
+            var comboService = await _dbContext.ComboServices.FirstOrDefaultAsync(e => e.ComboId == comboId && e.ServiceId == servicesId);
+            if (comboService != null)
+            {
+                _dbContext.ComboServices.Remove(comboService);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            return false;
+        }
+
         public async Task<Combo> UpdateCombo(Combo combo, ComboRequest combodto)
         {
             combo.CreatedDate = DateTime.Now;
@@ -112,6 +149,35 @@ namespace PetGrooming_Management_System.Repositories
             combo.IsActive = combodto.IsActive;
             await _dbContext.SaveChangesAsync();
             return combo;   
+        }
+
+        public async Task<object> DisplayComboById(int id)
+        {
+            return await _dbContext.Combos
+                .Where(c => c.Id == id)
+                .Select(e => new
+                {
+                    ComboId = e.Id,
+                    ComboName = e.Name,
+                    CreatedDate = e.CreatedDate,
+                    IsActive = e.IsActive,
+                    ComboServices = e.ComboServices
+                                .GroupBy(cs => new { cs.PetName, cs.PetWeight })
+                                .Select(g => new
+                                {
+                                    PetName = g.Key.PetName,
+                                    PetWeight = g.Key.PetWeight,
+                                    TotalPrice = g.Sum(cs => cs.Price),
+                                    DiscountPrice = g.Sum(cs => cs.Price) * (1.0 - DiscountCombo(g.Count()).Result),
+                                    Service = g.Select(cs => new
+                                    {
+                                        ServiceId = cs.ServiceId,
+                                        ServiceName = cs.Service.ServiceName,
+                                        Price = cs.Price,
+                                    }).ToList()
+                                }).ToList()
+                })
+                .FirstOrDefaultAsync();
         }
     }
 }
