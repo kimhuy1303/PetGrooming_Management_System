@@ -28,7 +28,7 @@ namespace PetGrooming_Management_System.Controllers
 
         // GET: api/Employees
         [HttpGet]
-        
+        [Authorize(Roles = "Manager")]
         public async Task<ActionResult<ICollection<Employee>>> GetEmployees()
         {
             var listEmployees = await _employeeRepository.GetAllEmployees();
@@ -68,6 +68,7 @@ namespace PetGrooming_Management_System.Controllers
         // POST: api/Employees
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Roles = "Manager")]
         public async Task<ActionResult<Employee>> PostEmployee([FromForm] EmployeeProfileRequest employee)
         {
             var _employee = await _employeeRepository.GetEmployeeByIdenNumber(employee.IdentificationNumber!);
@@ -78,6 +79,7 @@ namespace PetGrooming_Management_System.Controllers
 
         // DELETE: api/Employees/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> DeleteEmployee(int id)
         {
             await _employeeRepository.DeleteEmployee(id);
