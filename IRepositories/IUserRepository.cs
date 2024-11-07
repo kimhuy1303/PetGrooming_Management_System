@@ -10,8 +10,8 @@ namespace PetGrooming_Management_System.IRepositories
         Task<User> GetUserByUsername(string username);
         Task<User> GetUserById(int id);
         Task<bool> CreateUser(UserRequest userDTO);
-        void DeleteUser(int id);
+        Task DeleteUser(int id);
         Task<List<User>> SearchUser(string key);
-        void ModifyUser(int id, ProfileRequest profileDTO);
+        Task<User> ModifyUser(int id, ProfileRequest profileDTO);
     }
 }
