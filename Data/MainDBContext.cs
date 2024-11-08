@@ -20,6 +20,7 @@ namespace PetGrooming_Management_System.Data
         public DbSet<Service> Services { get; set; }
         public DbSet<Combo> Combos { get; set; }
         public DbSet<AppointmentDetail> AppointmentDetails { get; set; }
+        public DbSet<AppointmentService> AppointmentServices { get; set; }
         public DbSet<ComboServices> ComboServices { get; set; }
         public DbSet<UserAnnouncements> UserAnnouncements { get; set; }
         

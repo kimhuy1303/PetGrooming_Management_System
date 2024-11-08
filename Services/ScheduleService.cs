@@ -1,4 +1,5 @@
 ﻿using PetGrooming_Management_System.IRepositories;
+using PetGrooming_Management_System.Models;
 
 namespace PetGrooming_Management_System.Services
 {
@@ -15,6 +16,10 @@ namespace PetGrooming_Management_System.Services
             _employeeShiftRepository = employeeShiftRepository;
         }
 
+        public async Task<IEnumerable<EmployeeShift>> CreateScheduleAuto()
+        {
+            return null;
+        }
         
     }
 }

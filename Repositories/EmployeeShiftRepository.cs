@@ -81,5 +81,18 @@ namespace PetGrooming_Management_System.Repositories
             var res = await _dbcontext.EmployeeShifts.Where(e => e.Date.Day == day).ToListAsync();
             return res;
         }
+
+        public async Task<IEnumerable<EmployeeShift>> GetEmployeeShiftsForWeek(DateTime start, DateTime end)
+        {
+            var result = await _dbcontext.EmployeeShifts.Where(e => e.Date.Day >= start.Day && e.Date.Day <= end.Day).ToListAsync();
+
+            return result;
+        }
+
+        public async Task<int> GetNumberOfEmployeeRegisterShiftForAWeek(DateTime start, DateTime end)
+        {
+            var result = await GetEmployeeShiftsForWeek(start,end);
+            return result.Count();
+        }
     }
 }

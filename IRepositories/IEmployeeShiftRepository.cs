@@ -13,5 +13,8 @@ namespace PetGrooming_Management_System.IRepositories
         Task<Boolean> UpdateEmployeeShift(EmployeeShiftRequest registerShiftdto);
 
         Task<ICollection<EmployeeShift>> GetEmployeeShiftsByDay(int day);
+
+        Task<int> GetNumberOfEmployeeRegisterShiftForAWeek(DateTime start, DateTime end);
+        Task<IEnumerable<EmployeeShift>> GetEmployeeShiftsForWeek(DateTime start, DateTime end);
     }
 }
