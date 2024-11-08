@@ -18,7 +18,7 @@ namespace PetGrooming_Management_System.Models
         public DateTime? CreatedDate { get; set; }
 
         // Navigate
-        public int? IdCustomer { get; set; }
+        public int? CustomerId { get; set; }
         public User? Customer { get; set; }
         public AppointmentDetail? AppointmentDetail { get; set; }
 

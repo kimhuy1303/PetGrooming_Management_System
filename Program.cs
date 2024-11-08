@@ -36,6 +36,7 @@ builder.Services.AddScoped<IEmployeeShiftRepository, EmployeeShiftRepository>();
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<IPriceRepository, PriceRepository>();
 builder.Services.AddScoped<IComboRepository, ComboRepository>();
+builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<JWTService>();
 
 // Connect Database
