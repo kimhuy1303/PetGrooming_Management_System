@@ -7,5 +7,9 @@
             if(currentDate > NewDate) return false;
             return true;
         }
+        public int DayRange(DateTime start, DateTime end)
+        {
+            return end.Day - start.Day;
+        }
     }
 }

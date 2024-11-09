@@ -31,7 +31,7 @@ namespace PetGrooming_Management_System.Utils
             if (System.IO.File.Exists(imagePath))
                 System.IO.File.Delete(imagePath);
         }
-        public string UploadFilePath(IFormFile file)
+        public static string UploadFilePath(IFormFile file)
         {
             string filename = "";
             try
@@ -44,7 +44,7 @@ namespace PetGrooming_Management_System.Utils
                 {
                     file.CopyTo(stream);
                 }
-                return filename;
+                return getFilePath;
             }
 
             catch (Exception ex)

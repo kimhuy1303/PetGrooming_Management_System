@@ -33,8 +33,9 @@ namespace PetGrooming_Management_System.Controllers
         [Authorize(Roles = "Employee")]
         public async Task<ActionResult> RegisterShift([FromBody] EmployeeShiftRequest registerShiftdto)
         {
-            var employee =  await _employeeRepository.GetEmployeeById(registerShiftdto.IdEmployee);
-            var shift = await _shiftRepository.GetShiftById(registerShiftdto.IdShift);
+            if(registerShiftdto == null) return BadRequest(ModelState);
+            var employee =  await _employeeRepository.GetEmployeeById(registerShiftdto.EmployeeId);
+            var shift = await _shiftRepository.GetShiftById(registerShiftdto.ShiftId);
             if (employee == null) return BadRequest("Employee does not exist!");
             if (shift == null) return BadRequest("Shift does not exist!");
             var res = await _employeeShiftRepository.RegisterShift(registerShiftdto);
@@ -58,6 +59,36 @@ namespace PetGrooming_Management_System.Controllers
             var result = await _employeeShiftRepository.DeleteEmployeeShift(employeeShiftRequest);
             if (result != true) return BadRequest("Deleting failed!");
             return Ok("Deleting succesful");
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Manager, Employee")]
+        public async Task<ActionResult> EditEmployeeShifts(int employeeId, [FromBody] EmployeeShiftRequest editdto)
+        {
+            if (editdto == null) return BadRequest(ModelState);
+
+            if (employeeId != editdto.EmployeeId) return BadRequest("EmployeeId does not exist or does not register shift");
+            
+            var updated = await _employeeShiftRepository.UpdateEmployeeShift(editdto);
+            if (updated != true) return BadRequest("Something went wrong in updating!");
+            return Ok("Updating shifts successfully!");
+        }
+
+        [HttpGet("GetShiftsForWeek")]
+        [Authorize(Roles = "Manager")]
+        public async Task<ActionResult> GetAllEmployeeShiftsForWeek(DateTime start, DateTime end)
+        {
+            var res = await _employeeShiftRepository.GetEmployeeShiftsForWeek(start, end);
+            if(res.IsNullOrEmpty()) return BadRequest("This week does not have any shifts");
+            return Ok(res);
+        }
+        [HttpGet("GetShiftsForDate")]
+        [Authorize(Roles = "Manager")]
+        public async Task<ActionResult> GetAllEmployeeShiftsForDate(DateTime date)
+        {
+            var res = await _employeeShiftRepository.GetEmployeeShiftsByDay(date);
+            if (res.IsNullOrEmpty()) return BadRequest("This date does not have any shifts");
+            return Ok(res);
         }
     }
 }
