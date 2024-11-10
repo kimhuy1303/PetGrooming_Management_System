@@ -20,7 +20,7 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task UpdateEmloyeeShiftInSchedule(int scheduleId, EmployeeShiftRequest employeeshiftdto)
         {
-            var employeeshift = await _dbcontext.EmployeeShifts.FirstOrDefaultAsync(e => e.ScheduleId == scheduleId && e.EmployeeId == employeeshiftdto.EmployeeId && e.Date.Date == employeeshiftdto.Date.Date && e.ShiftId == employeeshiftdto.ShiftId)
+            var employeeshift = await _dbcontext.EmployeeShifts.FirstOrDefaultAsync(e => e.EmployeeId == employeeshiftdto.EmployeeId && e.Date.Date == employeeshiftdto.Date.Date && e.ShiftId == employeeshiftdto.ShiftId)
             if (employeeshift != null) 
             {
                 employeeshift.ScheduleId = scheduleId;
