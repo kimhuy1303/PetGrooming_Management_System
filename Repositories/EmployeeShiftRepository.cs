@@ -90,7 +90,7 @@ namespace PetGrooming_Management_System.Repositories
         public async Task<int> GetNumberOfEmployeeRegisterShiftForAWeek(DateTime start, DateTime end)
         {
             var result = await GetEmployeeShiftsForWeek(start,end);
-            return result.Count();
+            return result.Select(e=>e.EmployeeId).Distinct().Count();
         }
 
         public async Task<IEnumerable<EmployeeShift>> GetEmployeeShifts(int employeeId)
@@ -105,6 +105,19 @@ namespace PetGrooming_Management_System.Repositories
                                           && e.ShiftId == employeeShiftRequest.ShiftId);
             if (check != null) return true;
             return false;
+        }
+
+        public async Task<IEnumerable<EmployeeShift>> GetNotScheduleEmployeeShiftsForWeek(DateTime start, DateTime end)
+        {
+            var result = await _dbcontext.EmployeeShifts.Where(e => e.Date.Day >= start.Day && e.Date.Day <= end.Day && e.Schedule.Equals(null)).ToListAsync();
+
+            return result;
+        }
+
+        public async Task<ICollection<EmployeeShift>> GetNotScheduleEmployeeShiftsByDay(DateTime date)
+        {
+            var res = await _dbcontext.EmployeeShifts.Where(e => e.Date.Date == date.Date && e.Schedule.Equals(null)).ToListAsync();
+            return res;
         }
     }
 }

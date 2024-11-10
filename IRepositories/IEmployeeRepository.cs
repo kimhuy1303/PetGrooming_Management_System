@@ -12,6 +12,7 @@ namespace PetGrooming_Management_System.IRepositories
         Task DeleteEmployee(int id);    
         Task ModifyProfileEmployee(int id, EmployeeProfileRequest profile);
 
+        Task<int> CountEmployee();
         
     }
 }

@@ -36,6 +36,11 @@ namespace PetGrooming_Management_System.Repositories
             
         }
 
+        public async Task<int> CountEmployee()
+        {
+            return await _dbcontext.Employees.CountAsync();
+        }
+
         public async Task DeleteEmployee(int id)
         {
             var _employee = await GetEmployeeById(id);
