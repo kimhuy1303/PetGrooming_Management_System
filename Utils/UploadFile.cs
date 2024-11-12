@@ -44,7 +44,7 @@ namespace PetGrooming_Management_System.Utils
                 {
                     file.CopyTo(stream);
                 }
-                return getFilePath;
+                return filename;
             }
 
             catch (Exception ex)

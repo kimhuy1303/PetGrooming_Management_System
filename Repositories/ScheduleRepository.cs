@@ -20,7 +20,7 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task UpdateEmloyeeShiftInSchedule(int scheduleId, EmployeeShiftRequest employeeshiftdto)
         {
-            var employeeshift = await _dbcontext.EmployeeShifts.FirstOrDefaultAsync(e => e.EmployeeId == employeeshiftdto.EmployeeId && e.Date.Date == employeeshiftdto.Date.Date && e.ShiftId == employeeshiftdto.ShiftId)
+            var employeeshift = await _dbcontext.EmployeeShifts.FirstOrDefaultAsync(e => e.EmployeeId == employeeshiftdto.EmployeeId && e.Date.Date == employeeshiftdto.Date.Date && e.ShiftId == employeeshiftdto.ShiftId);
             if (employeeshift != null) 
             {
                 employeeshift.ScheduleId = scheduleId;
@@ -56,7 +56,7 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task<Schedule> GetScheduleByWeek(DateTime start, DateTime end)
         {
-            var res = await _dbcontext.Schedules.Include(e => e.EmployeeShifts).FirstOrDefaultAsync(e => e.startDate.Date == start.Date && e.endDate.Date == end.Date);
+            var res = await _dbcontext.Schedules.Include(e => e.EmployeeShifts).FirstOrDefaultAsync(e => e.startDate.Date >= start.Date && e.endDate.Date <= end.Date);
             return res;
         }
 
@@ -73,6 +73,13 @@ namespace PetGrooming_Management_System.Repositories
         public async Task<EmployeeShift> GetEmployeeShiftInSchedule(int scheduleId, EmployeeShiftRequest employeeshiftdto)
         {
             return await _dbcontext.EmployeeShifts.FirstOrDefaultAsync(e => e.ScheduleId == scheduleId && e.EmployeeId == employeeshiftdto.EmployeeId && e.Date.Date == employeeshiftdto.Date.Date && e.ShiftId == employeeshiftdto.ShiftId);
+        }
+
+        public async Task<IEnumerable<EmployeeShift>> GetEmployeeShiftsByEmployee(int employeeId, DateTime start, DateTime end)
+        {
+            var schedule = await GetScheduleByWeek(start, end);
+            var result = schedule.EmployeeShifts.Where(e => e.EmployeeId == employeeId).ToList();
+            return result;
         }
     }
 } 

@@ -55,23 +55,21 @@ namespace PetGrooming_Management_System.Repositories
             return employeeShift;
         }
 
-        public async Task<bool> DeleteEmployeeShift(EmployeeShiftRequest employeeShiftdto)
+        public async Task DeleteEmployeeShift(EmployeeShiftRequest employeeShiftdto)
         {
             var employeeShift = await GetEmployeeShift(employeeShiftdto.EmployeeId, employeeShiftdto.Date);
             if (employeeShift != null) 
             {
                 _dbcontext!.EmployeeShifts.Remove(employeeShift);
                 _dbcontext!.SaveChanges();
-                return true;
             }
-            return false;
         }
 
-        public async Task<bool> UpdateEmployeeShift(EmployeeShiftRequest employeeShiftdto)
+        public async Task UpdateEmployeeShift(EmployeeShiftRequest employeeShiftdto)
         {
             var registeredShift = await GetEmployeeShift(employeeShiftdto.EmployeeId, employeeShiftdto.Date);
             if (registeredShift != null) registeredShift.ShiftId = employeeShiftdto.ShiftId;
-            return await _dbcontext.SaveChangesAsync() > 0;
+            await _dbcontext.SaveChangesAsync();
         }
 
         public async Task<ICollection<EmployeeShift>> GetEmployeeShiftsByDay(DateTime date)

@@ -12,6 +12,7 @@ namespace PetGrooming_Management_System.IRepositories
         Task UpdateEmloyeeShiftInSchedule(int scheduleId, EmployeeShiftRequest employeeshiftdto);
         Task RemoveEmployeeShift(int scheduleId, EmployeeShiftRequest employeeshiftdto);
         Task<EmployeeShift> GetEmployeeShiftInSchedule(int scheduleId, EmployeeShiftRequest employeeshiftdto);
-        
+        Task<IEnumerable<EmployeeShift>> GetEmployeeShiftsByEmployee(int employeeId, DateTime start, DateTime end);
+
     }
 }
