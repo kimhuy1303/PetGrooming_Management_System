@@ -31,7 +31,7 @@ namespace PetGrooming_Management_System.Utils
             if (System.IO.File.Exists(imagePath))
                 System.IO.File.Delete(imagePath);
         }
-        public string UploadFilePath(IFormFile file)
+        public static string UploadFilePath(IFormFile file)
         {
             string filename = "";
             try

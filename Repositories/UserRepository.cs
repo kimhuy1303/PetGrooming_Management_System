@@ -5,6 +5,7 @@ using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
 using PetGrooming_Management_System.Utils;
 using PetGrooming_Management_System.Configs.Constant;
+using Azure.Core;
 
 
 namespace PetGrooming_Management_System.Repositories
@@ -19,6 +20,7 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task<bool> CreateUser(UserRequest userDTO)
         {
+            string defaultAvatarPath = UploadFile.GetFilePath("default-avatar.png");
             var _user = new User
             {
                 Username = userDTO.UserName,
@@ -26,6 +28,7 @@ namespace PetGrooming_Management_System.Repositories
                 Password = userDTO.Password,
                 PhoneNumber = userDTO.PhoneNumber,
                 Role = userDTO.Role,
+                AvatarPath = defaultAvatarPath,
                 CreatedDate = DateTime.UtcNow
 
             };
@@ -61,7 +64,7 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task<User> GetUserByUsername(string username)
         {
-            var _user = await _dbContext.Users.FirstOrDefaultAsync(e => e.Role == Config.Constant.Role.Customer && e.Username!.Equals(username));
+            var _user = await _dbContext.Users.FirstOrDefaultAsync(e => e.Username!.Equals(username));
             return _user;
         }
 
@@ -73,7 +76,7 @@ namespace PetGrooming_Management_System.Repositories
         public async Task<User> ModifyUser(int id, ProfileRequest request)
         {
             // UploadFile cho avatar 
-            var avatarPath = UploadFile.GetFilePath(request.AvatarPath!);
+            var avatarPath = UploadFile.UploadFilePath(request.AvatarPath);
            
             var _user = await GetUserById(id);
             _user.FullName = request.FullName;

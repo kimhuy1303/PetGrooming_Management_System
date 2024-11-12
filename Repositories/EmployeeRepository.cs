@@ -19,7 +19,7 @@ namespace PetGrooming_Management_System.Repositories
 
             var _employee = new Employee
             {
-                AvatarPath = UploadFile.GetFilePath(employeeDTO.AvatarPath!),
+                AvatarPath = employeeDTO.AvatarPath==null ? UploadFile.GetFilePath("default-avatar.png") : UploadFile.UploadFilePath(employeeDTO.AvatarPath!),
                 Username = employeeDTO.Username,
                 Password = BCrypt.Net.BCrypt.HashPassword(employeeDTO.Password),
                 FullName = employeeDTO.FullName,
@@ -34,6 +34,11 @@ namespace PetGrooming_Management_System.Repositories
             await _dbcontext!.Employees.AddAsync(_employee);
             await _dbcontext.SaveChangesAsync();
             
+        }
+
+        public async Task<int> CountEmployee()
+        {
+            return await _dbcontext.Employees.CountAsync();
         }
 
         public async Task DeleteEmployee(int id)
@@ -61,7 +66,7 @@ namespace PetGrooming_Management_System.Repositories
         public async Task ModifyProfileEmployee(int id, EmployeeProfileRequest profile)
         {
             var _employee = await GetEmployeeById(id);
-            _employee.AvatarPath = UploadFile.GetFilePath(profile.AvatarPath!);
+            _employee.AvatarPath = UploadFile.UploadFilePath(profile.AvatarPath!);
             _employee.DateOfBirth = profile.DateOfBirth;
             _employee.Address = profile.Address;
             _employee.Gender = profile.Gender;

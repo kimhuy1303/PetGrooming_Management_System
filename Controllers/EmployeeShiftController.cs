@@ -33,8 +33,9 @@ namespace PetGrooming_Management_System.Controllers
         [Authorize(Roles = "Employee")]
         public async Task<ActionResult> RegisterShift([FromBody] EmployeeShiftRequest registerShiftdto)
         {
-            var employee =  await _employeeRepository.GetEmployeeById(registerShiftdto.IdEmployee);
-            var shift = await _shiftRepository.GetShiftById(registerShiftdto.IdShift);
+            if(registerShiftdto == null) return BadRequest(ModelState);
+            var employee =  await _employeeRepository.GetEmployeeById(registerShiftdto.EmployeeId);
+            var shift = await _shiftRepository.GetShiftById(registerShiftdto.ShiftId);
             if (employee == null) return BadRequest("Employee does not exist!");
             if (shift == null) return BadRequest("Shift does not exist!");
             var res = await _employeeShiftRepository.RegisterShift(registerShiftdto);
@@ -51,13 +52,38 @@ namespace PetGrooming_Management_System.Controllers
             return Ok(result);
         }
 
-        [HttpDelete()]
-        [Authorize(Roles = "Manager")]
-        public async Task<ActionResult> DeleteShift([FromBody] EmployeeShiftRequest employeeShiftRequest)
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Manager, Employee")]
+        public async Task<ActionResult> EditEmployeeShifts(int id, [FromBody] EmployeeShiftRequest editdto)
         {
-            var result = await _employeeShiftRepository.DeleteEmployeeShift(employeeShiftRequest);
-            if (result != true) return BadRequest("Deleting failed!");
-            return Ok("Deleting succesful");
+            if (editdto == null) return BadRequest(ModelState);
+
+            if (id != editdto.EmployeeId) return BadRequest("EmployeeId does not exist or does not register shift");
+            var isExist = await _employeeShiftRepository.GetEmployeeShift(editdto.EmployeeId, editdto.Date);
+            if(isExist != null)
+            {
+                // remove shift cũ
+                await _employeeShiftRepository.DeleteEmployeeShift(editdto);
+            }
+            await _employeeShiftRepository.UpdateEmployeeShift(editdto);
+            return Ok("Updating shifts successfully!");
+        }
+
+        [HttpGet("GetShiftsForWeek")]
+        [Authorize(Roles = "Manager")]
+        public async Task<ActionResult> GetAllEmployeeShiftsForWeek(DateTime start, DateTime end)
+        {
+            var res = await _employeeShiftRepository.GetEmployeeShiftsForWeek(start, end);
+            if(res.IsNullOrEmpty()) return BadRequest("This week does not have any shifts");
+            return Ok(res);
+        }
+        [HttpGet("GetShiftsForDate")]
+        [Authorize(Roles = "Manager")]
+        public async Task<ActionResult> GetAllEmployeeShiftsForDate(DateTime date)
+        {
+            var res = await _employeeShiftRepository.GetEmployeeShiftsByDay(date);
+            if (res.IsNullOrEmpty()) return BadRequest("This date does not have any shifts");
+            return Ok(res);
         }
     }
 }
