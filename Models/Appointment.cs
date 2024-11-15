@@ -21,6 +21,7 @@ namespace PetGrooming_Management_System.Models
         public int? CustomerId { get; set; }
         public User? Customer { get; set; }
         public AppointmentDetail? AppointmentDetail { get; set; }
+        public Annoucement? Annoucement { get; set; }
 
     }
 }

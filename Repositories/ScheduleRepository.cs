@@ -11,11 +11,13 @@ namespace PetGrooming_Management_System.Repositories
     {
         private readonly MainDBContext _dbcontext;
         private readonly ScheduleService _scheduleService;
+        private readonly IEmployeeRepository _employeeRepository;
        
-        public ScheduleRepository(ScheduleService scheduleService, MainDBContext mainDBContext)
+        public ScheduleRepository(ScheduleService scheduleService, MainDBContext mainDBContext, IEmployeeRepository employeeRepository)
         {
             _scheduleService = scheduleService;
             _dbcontext = mainDBContext;
+            _employeeRepository = employeeRepository;
         }
 
         public async Task UpdateEmloyeeShiftInSchedule(int scheduleId, EmployeeShiftRequest employeeshiftdto)
@@ -28,16 +30,43 @@ namespace PetGrooming_Management_System.Repositories
             }
         }
 
-        public async Task CreateSchedule(DateTime start, DateTime end)
+        public async Task CreateSchedule(ScheduleRequest rawSchedule)
         {
+            
+            await _scheduleService.UpdateWorkHours();
             var schedule = new Schedule
             {
-                startDate = start,
-                endDate = end,
-                EmployeeShifts = await _scheduleService.GenerateSchedule(start, end)
+                startDate = rawSchedule.StartDate,
+                endDate = rawSchedule.EndDate,
+                //EmployeeShifts = rawSchedule.EmployeeShifts
             };
             await _dbcontext.Schedules.AddAsync(schedule);
+            foreach (var shift in rawSchedule.EmployeeShifts)
+            {
+                // Kiểm tra xem shift có tồn tại không
+                var trackedShift = await _dbcontext.EmployeeShifts
+                    .FirstOrDefaultAsync(e => e.EmployeeId == shift.EmployeeId
+                                           && e.ShiftId == shift.ShiftId
+                                           && e.Date == shift.Date);
+
+                if (trackedShift != null)
+                    // Gán shift đã tồn tại vào Schedule
+                    schedule.EmployeeShifts.Add(trackedShift);
+                else
+                    // Gán shift mới nếu chưa tồn tại
+                    schedule.EmployeeShifts.Add(shift);
+            }
             await _dbcontext.SaveChangesAsync();
+        }
+        public async Task<ScheduleRequest> RawSchedule(DateTime start, DateTime end)
+        {
+            var schedule = new ScheduleRequest
+            {
+                StartDate = start,
+                EndDate = end,
+                EmployeeShifts = await _scheduleService.GenerateSchedule(start, end)
+            };
+            return schedule;
         }
 
         public async Task<List<EmployeeShift>> GetListEmployeeShiftInSchedule(int scheduleId)
@@ -57,6 +86,7 @@ namespace PetGrooming_Management_System.Repositories
         public async Task<Schedule> GetScheduleByWeek(DateTime start, DateTime end)
         {
             var res = await _dbcontext.Schedules.Include(e => e.EmployeeShifts).FirstOrDefaultAsync(e => e.startDate.Date >= start.Date && e.endDate.Date <= end.Date);
+            if (res != null) res.EmployeeShifts = res.EmployeeShifts.OrderBy(s => s.Date).ToList();
             return res;
         }
 
@@ -75,11 +105,18 @@ namespace PetGrooming_Management_System.Repositories
             return await _dbcontext.EmployeeShifts.FirstOrDefaultAsync(e => e.ScheduleId == scheduleId && e.EmployeeId == employeeshiftdto.EmployeeId && e.Date.Date == employeeshiftdto.Date.Date && e.ShiftId == employeeshiftdto.ShiftId);
         }
 
-        public async Task<IEnumerable<EmployeeShift>> GetEmployeeShiftsByEmployee(int employeeId, DateTime start, DateTime end)
+        public async Task<IEnumerable<object>> GetEmployeeShiftsByEmployee(int employeeId, Schedule schedule)
         {
-            var schedule = await GetScheduleByWeek(start, end);
-            var result = schedule.EmployeeShifts.Where(e => e.EmployeeId == employeeId).ToList();
+
+            var result = schedule.EmployeeShifts.Where(e => e.EmployeeId == employeeId).Select(shift => new
+            {
+                EmployeeId = shift.EmployeeId,
+                ShiftId = shift.ShiftId,
+                Date = shift.Date,
+            }).ToList();
             return result;
         }
+
+       
     }
 } 

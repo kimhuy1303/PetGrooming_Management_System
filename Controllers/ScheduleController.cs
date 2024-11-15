@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PetGrooming_Management_System.DTOs.Requests;
 using PetGrooming_Management_System.IRepositories;
+using PetGrooming_Management_System.Models;
 using PetGrooming_Management_System.Utils;
 using System.Security.Cryptography;
 
@@ -15,34 +16,46 @@ namespace PetGrooming_Management_System.Controllers
         private readonly IScheduleRepository _scheduleRepository;
         private readonly IEmployeeShiftRepository _employeeShiftRepository;
         private readonly IEmployeeRepository _employeeRepository;
-        public ScheduleController(IScheduleRepository scheduleRepository, IEmployeeShiftRepository employeeShiftRepository, IEmployeeRepository employeeRepository)
+        private readonly INotificationRepository _notificationRepository;
+        public ScheduleController(IScheduleRepository scheduleRepository, IEmployeeShiftRepository employeeShiftRepository, IEmployeeRepository employeeRepository, INotificationRepository notificationRepository)
         {
             _scheduleRepository = scheduleRepository;
             _employeeShiftRepository = employeeShiftRepository;
             _employeeRepository = employeeRepository;
+            _notificationRepository = notificationRepository;
         }
 
-        [HttpPost("CreateSchedule")]
+        [HttpGet("RawSchedule")]
         [Authorize(Roles = "Manager")]
         public async Task<ActionResult> AutoSchedule(DateTime start, DateTime end)
         {
             if (new ValidateDateTime().DayRange(start, end) != 5) return BadRequest("Date is not valid for scheduling!");
+            if (start.Date < DateTime.UtcNow && end.Date < DateTime.UtcNow) return BadRequest("Date is overdue for scheduling");
             var amountEmployeeShiftsAssigned = await _employeeShiftRepository.GetNumberOfEmployeeRegisterShiftForAWeek(start, end);
             if (amountEmployeeShiftsAssigned < await _employeeRepository.CountEmployee()) return BadRequest("The number of registered employees is not enough!");
-            await _scheduleRepository.CreateSchedule(start, end);
+            var raw = await _scheduleRepository.RawSchedule(start, end);
+            return Ok(raw);
+        }
+        [HttpPost("ConfirmSchedule")]
+        [Authorize(Roles = "Manager")]
+        public async Task<ActionResult> ConfirmSchedule([FromBody] ScheduleRequest rawSchedule)
+        {
+            if (rawSchedule == null) return BadRequest(ModelState);
+            await _scheduleRepository.CreateSchedule(rawSchedule);
+            var message = "The work schedule (" + rawSchedule.StartDate.ToString("dd/MM/yyyy")+"-"+rawSchedule.EndDate.ToString("dd/MM/yyyy") + " has been announced. Please check your work schedule!";
+            //await _notificationRepository.SendNotificationToAllEmployees(message);
             return Ok("Scheduling automation is successful!");
-
         }
 
         [HttpGet("/Employee/{id}")]
-        public async Task<ActionResult> GetEmployeeShiftsByEmployeeId(int employeeId, DateTime start, DateTime end)
+        public async Task<ActionResult> GetEmployeeShiftsByEmployeeId(int id, DateTime start, DateTime end)
         {
             if (new ValidateDateTime().DayRange(start, end) != 5) return BadRequest("Date is not valid!");
-            var employee = await _employeeRepository.GetEmployeeById(employeeId);
+            var employee = await _employeeRepository.GetEmployeeById(id);
             if (employee == null) return BadRequest("Employee does not exist!");
             var schedule = await _scheduleRepository.GetScheduleByWeek(start, end);
             if (schedule == null) return BadRequest("Schedule deos not exist!");
-            var res = await _scheduleRepository.GetEmployeeShiftsByEmployee(employeeId, schedule.startDate, schedule.endDate);
+            IEnumerable<object> res = await _scheduleRepository.GetEmployeeShiftsByEmployee(id, schedule);
             return Ok(res);
         }
 

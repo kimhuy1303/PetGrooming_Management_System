@@ -50,7 +50,7 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task<ICollection<Employee>> GetAllEmployees()
         {
-            return await _dbcontext!.Employees.Include(employee => employee.EmployeeShifts).ThenInclude(e=> e.Shift).ToListAsync();
+            return await _dbcontext!.Employees.ToListAsync();
         }
 
         public async Task<Employee> GetEmployeeById(int id)

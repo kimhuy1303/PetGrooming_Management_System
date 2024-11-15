@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using PetGrooming_Management_System.Configs.Constant;
 using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
 using PetGrooming_Management_System.IRepositories;
@@ -11,10 +12,12 @@ namespace PetGrooming_Management_System.Repositories
     {
         private readonly MainDBContext _dbcontext;
         private readonly IComboRepository _comboRepository;
-        public AppointmentRepository(MainDBContext dbcontext, IComboRepository comboRepository)
+        private readonly IUserRepository _userRepository;
+        public AppointmentRepository(MainDBContext dbcontext, IComboRepository comboRepository, IUserRepository userRepository)
         {
             _dbcontext = dbcontext;
             _comboRepository = comboRepository;
+            _userRepository = userRepository;
         }
 
         public async Task AddServicesToAppointment(int appointmentDetailId, AppointmentServicesRequest appointmentservicesdto)
@@ -35,13 +38,15 @@ namespace PetGrooming_Management_System.Repositories
             await _dbcontext.SaveChangesAsync();
         }
 
-        public async Task MakeAnAppointment(int customerId, AppointmentRequest appointmentdto)
+        public async Task<AppointmentDetail> MakeAnAppointment(int customerId, AppointmentRequest appointmentdto)
         {
             var appointment = await CreateAppointment(appointmentdto, customerId);
             var appointmentDetail = await CreateAppointmentDetail(appointment.Id, appointmentdto.AppointmentDetail);
 
+            // Case1 : Nếu 
             if (!appointmentdto.AppointmentDetail.AppointmentServices.IsNullOrEmpty() && appointmentdto.AppointmentDetail.comboId == 0) 
             {
+                
                 foreach(AppointmentServicesRequest service in appointmentdto.AppointmentDetail.AppointmentServices)
                 {
                     await AddServicesToAppointment(appointmentDetail.Id, service);
@@ -60,6 +65,7 @@ namespace PetGrooming_Management_System.Repositories
                 appointmentDetail.ComboId = appointmentdto.AppointmentDetail.comboId;
                 await _dbcontext.SaveChangesAsync();
             }
+            return appointmentDetail;
         }
 
         public async Task<AppointmentDetail> CreateAppointmentDetail(int appointmentId, AppointmentDetailRequest appointmentdetaildto)
@@ -68,6 +74,7 @@ namespace PetGrooming_Management_System.Repositories
             {
                 TimeWorking = appointmentdetaildto.TimeWorking,
                 AppointmentId = appointmentId,
+                EmployeeId = appointmentdetaildto.EmployeeId
             };
             await _dbcontext.AppointmentDetails.AddAsync(appointmentDetail);
             await _dbcontext.SaveChangesAsync();
@@ -145,11 +152,18 @@ namespace PetGrooming_Management_System.Repositories
                 Address = appointmentdto.CustomerAddress,
                 CreatedDate = DateTime.UtcNow,
                 Status = Configs.Constant.Status.Pending,
-                CustomerId = customerId
+                CustomerId = customerId,
+                Customer = await _userRepository.GetUserById(customerId)
             };
             await _dbcontext.Appointments.AddAsync(newAppointment);
             await _dbcontext.SaveChangesAsync();
             return newAppointment;
+        }
+
+        public async Task ChangeStatusAppointment(Appointment appointment, Status status)
+        {
+            appointment.Status = status;
+            await _dbcontext.SaveChangesAsync();
         }
     }
 }
