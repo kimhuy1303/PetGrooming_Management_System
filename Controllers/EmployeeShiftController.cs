@@ -6,6 +6,7 @@ using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
+using PetGrooming_Management_System.Utils;
 
 namespace PetGrooming_Management_System.Controllers
 {
@@ -30,7 +31,7 @@ namespace PetGrooming_Management_System.Controllers
         
 
         [HttpPost("RegisterShift")]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "Employee, Manager")]
         public async Task<ActionResult> RegisterShift([FromBody] EmployeeShiftRequest registerShiftdto)
         {
             if(registerShiftdto == null) return BadRequest(ModelState);
@@ -39,7 +40,7 @@ namespace PetGrooming_Management_System.Controllers
             if (employee == null) return BadRequest("Employee does not exist!");
             if (shift == null) return BadRequest("Shift does not exist!");
             var res = await _employeeShiftRepository.RegisterShift(registerShiftdto);
-            if(res != true) return BadRequest("Date is not valid");
+            if(res != true) return BadRequest("Date is not valid or employee had registered shift in this date!");
             return Ok("Registering shift successfully");
         }
 
@@ -69,19 +70,20 @@ namespace PetGrooming_Management_System.Controllers
             return Ok("Updating shifts successfully!");
         }
 
-        [HttpGet("GetShiftsForWeek")]
+        [HttpGet("GetNotScheduleShiftsForWeek")]
         [Authorize(Roles = "Manager")]
-        public async Task<ActionResult> GetAllEmployeeShiftsForWeek(DateTime start, DateTime end)
+        public async Task<ActionResult> GetNotScheduleEmployeeShiftsForWeek(DateTime start, DateTime end)
         {
-            var res = await _employeeShiftRepository.GetEmployeeShiftsForWeek(start, end);
+            if (new ValidateDateTime().DayRange(start, end) != 5) return BadRequest("A week is invalid!");
+            var res = await _employeeShiftRepository.GetNotScheduleEmployeeShiftsForWeek(start, end);
             if(res.IsNullOrEmpty()) return BadRequest("This week does not have any shifts");
             return Ok(res);
         }
-        [HttpGet("GetShiftsForDate")]
+        [HttpGet("GetNotScheduleShiftsForDate")]
         [Authorize(Roles = "Manager")]
-        public async Task<ActionResult> GetAllEmployeeShiftsForDate(DateTime date)
+        public async Task<ActionResult> GetNotScheduleEmployeeShiftsForDate(DateTime date)
         {
-            var res = await _employeeShiftRepository.GetEmployeeShiftsByDay(date);
+            var res = await _employeeShiftRepository.GetNotScheduleEmployeeShiftsByDay(date);
             if (res.IsNullOrEmpty()) return BadRequest("This date does not have any shifts");
             return Ok(res);
         }

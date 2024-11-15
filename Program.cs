@@ -4,12 +4,14 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PetGrooming_Management_System.Data;
+using PetGrooming_Management_System.SignalR;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Repositories;
 using PetGrooming_Management_System.Services;
 using PetGrooming_Management_System.Utils;
 using System.Text;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Builder;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
@@ -27,6 +29,8 @@ builder.Services.AddControllers()
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+// Add Hub
+builder.Services.AddSignalR();
 // Add Scoped
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
@@ -37,8 +41,11 @@ builder.Services.AddScoped<IPriceRepository, PriceRepository>();
 builder.Services.AddScoped<IComboRepository, ComboRepository>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<NotificationHub>();
 builder.Services.AddScoped<ScheduleService>();
 builder.Services.AddScoped<JWTService>();
+
 
 // Connect Database
 var connection = builder.Configuration.GetConnectionString("ConnectDb");
@@ -106,8 +113,12 @@ if (app.Environment.IsDevelopment())
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
     });
-}
+};
 
+// Add Endpoint maphub
+//app.UseRouting();
+app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub");
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 

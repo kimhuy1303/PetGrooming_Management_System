@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
+using PetGrooming_Management_System.DTOs.Responses;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -27,10 +28,14 @@ namespace PetGrooming_Management_System.Repositories
                 var existingEmployeeShift = await IsExist(registerShiftdto);
                 if (existingEmployeeShift != true)
                 {
+                    var emloyee = await _employeeRepository.GetEmployeeById(registerShiftdto.EmployeeId);
+                    var shift = await _shiftRepository.GetShiftById(registerShiftdto.ShiftId);
                     var assignedShift = new EmployeeShift()
                     {
                         EmployeeId = registerShiftdto.EmployeeId,
+                        Employee = emloyee,
                         ShiftId = registerShiftdto.ShiftId,
+                        Shift = shift,
                         Date = registerShiftdto.Date.Date,
                     };
                     await _dbcontext.EmployeeShifts.AddAsync(assignedShift);
@@ -74,20 +79,20 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task<ICollection<EmployeeShift>> GetEmployeeShiftsByDay(DateTime date)
         {
-            var res = await _dbcontext.EmployeeShifts.Where(e => e.Date.Date == date.Date).ToListAsync();
+            var res = await _dbcontext.EmployeeShifts.Include(e => e.Employee).Include(e => e.Shift).Where(e => e.Date.Date == date.Date && e.Schedule != null).ToListAsync();
             return res;
         }
 
         public async Task<IEnumerable<EmployeeShift>> GetEmployeeShiftsForWeek(DateTime start, DateTime end)
         {
-            var result = await _dbcontext.EmployeeShifts.Where(e => e.Date.Day >= start.Day && e.Date.Day <= end.Day).ToListAsync();
+            var result = await _dbcontext.EmployeeShifts.Include(e => e.Employee).Include(e => e.Shift).Where(e => e.Date.Day >= start.Day && e.Date.Day <= end.Day).ToListAsync();
 
             return result;
         }
 
         public async Task<int> GetNumberOfEmployeeRegisterShiftForAWeek(DateTime start, DateTime end)
         {
-            var result = await GetEmployeeShiftsForWeek(start,end);
+            var result = await GetNotScheduleEmployeeShiftsForWeek(start,end);
             return result.Select(e=>e.EmployeeId).Distinct().Count();
         }
 
@@ -105,17 +110,53 @@ namespace PetGrooming_Management_System.Repositories
             return false;
         }
 
-        public async Task<IEnumerable<EmployeeShift>> GetNotScheduleEmployeeShiftsForWeek(DateTime start, DateTime end)
+        public async Task<IEnumerable<EmployeeShiftResponse>> GetNotScheduleEmployeeShiftsForWeek(DateTime start, DateTime end)
         {
-            var result = await _dbcontext.EmployeeShifts.Where(e => e.Date.Day >= start.Day && e.Date.Day <= end.Day && e.Schedule.Equals(null)).ToListAsync();
+            var result = await _dbcontext.EmployeeShifts.Where(e => e.Date.Day >= start.Day && e.Date.Day <= end.Day && e.Schedule.Equals(null))
+                                                        .OrderBy(e => e.Date)
+                                                        .Select(ems => new EmployeeShiftResponse
+                                                        {
+                                                            ShiftId = ems.ShiftId,
+                                                            TimeSlot = ems.Shift.TimeSlot,
+                                                            EmployeeId = ems.EmployeeId,
+                                                            EmployeeName = ems.Employee.FullName,
+                                                            EmployeeWorkHours = ems.Employee.TotalWorkHours,
+                                                            Date = ems.Date.Date
+
+                                                        })
+                                                        .ToListAsync();
 
             return result;
         }
 
-        public async Task<ICollection<EmployeeShift>> GetNotScheduleEmployeeShiftsByDay(DateTime date)
+        public async Task<ICollection<EmployeeShiftResponse>> GetNotScheduleEmployeeShiftsByDay(DateTime date)
         {
-            var res = await _dbcontext.EmployeeShifts.Where(e => e.Date.Date == date.Date && e.Schedule.Equals(null)).ToListAsync();
+            var res = await _dbcontext.EmployeeShifts.Where(e => e.Date.Date == date.Date && e.Schedule.Equals(null))
+                                                     .Select(ems => new EmployeeShiftResponse
+                                                     {
+                                                         ShiftId = ems.ShiftId,
+                                                         TimeSlot = ems.Shift.TimeSlot,
+                                                         EmployeeId = ems.EmployeeId,
+                                                         EmployeeName = ems.Employee.FullName,
+                                                         EmployeeWorkHours = ems.Employee.TotalWorkHours,
+                                                         Date = ems.Date.Date
+
+                                                     })
+                                                     .ToListAsync();
             return res;
+        }
+
+        public async Task UpdateTotalHoursWorkOfEmployee(int workHour, Employee employee)
+        {
+            employee.TotalWorkHours += workHour;
+            await _dbcontext.SaveChangesAsync();
+        }
+
+        public async Task<bool> IsEmployeeWorkingByDateInSchedule(int employeeId, DateTime date)
+        {
+            var employeeShiftByDate = await GetEmployeeShiftsByDay(date);
+            var isWorking = employeeShiftByDate.Any(e => e.EmployeeId == employeeId);
+            return isWorking;
         }
     }
 }
