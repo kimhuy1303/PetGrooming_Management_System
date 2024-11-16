@@ -12,12 +12,16 @@ namespace PetGrooming_Management_System.Repositories
         private readonly MainDBContext _dbcontext;
         private readonly ScheduleService _scheduleService;
         private readonly IEmployeeRepository _employeeRepository;
+        private  readonly IEmployeeShiftRepository _employeeShiftRepository;
+        private readonly IShiftRepository _shiftRepository;
        
-        public ScheduleRepository(ScheduleService scheduleService, MainDBContext mainDBContext, IEmployeeRepository employeeRepository)
+        public ScheduleRepository(ScheduleService scheduleService, MainDBContext mainDBContext, IEmployeeRepository employeeRepository, IShiftRepository shiftRepository, IEmployeeShiftRepository employeeShiftRepository)
         {
             _scheduleService = scheduleService;
             _dbcontext = mainDBContext;
             _employeeRepository = employeeRepository;
+            _shiftRepository = shiftRepository;
+            _employeeShiftRepository = employeeShiftRepository;
         }
 
         public async Task UpdateEmloyeeShiftInSchedule(int scheduleId, EmployeeShiftRequest employeeshiftdto)
@@ -32,8 +36,6 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task CreateSchedule(ScheduleRequest rawSchedule)
         {
-            
-            await _scheduleService.UpdateWorkHours();
             var schedule = new Schedule
             {
                 startDate = rawSchedule.StartDate,
@@ -48,14 +50,18 @@ namespace PetGrooming_Management_System.Repositories
                     .FirstOrDefaultAsync(e => e.EmployeeId == shift.EmployeeId
                                            && e.ShiftId == shift.ShiftId
                                            && e.Date == shift.Date);
-
+                var employee = await _employeeRepository.GetEmployeeById((int)shift.EmployeeId);
+                var workHours = await _shiftRepository.GetWorkHoursInTimeSlot((int)shift.ShiftId);
+                await _employeeShiftRepository.UpdateTotalHoursWorkOfEmployee(workHours, employee);
                 if (trackedShift != null)
                     // Gán shift đã tồn tại vào Schedule
                     schedule.EmployeeShifts.Add(trackedShift);
                 else
                     // Gán shift mới nếu chưa tồn tại
                     schedule.EmployeeShifts.Add(shift);
+
             }
+            
             await _dbcontext.SaveChangesAsync();
         }
         public async Task<ScheduleRequest> RawSchedule(DateTime start, DateTime end)
@@ -69,14 +75,14 @@ namespace PetGrooming_Management_System.Repositories
             return schedule;
         }
 
-        public async Task<List<EmployeeShift>> GetListEmployeeShiftInSchedule(int scheduleId)
-        {
-            var listEmployeeShifts = await _dbcontext.EmployeeShifts.Where(e => e.ScheduleId == scheduleId)
-                                                                    .Include(e => e.Employee)
-                                                                    .Include(e => e.Shift)
-                                                                    .ToListAsync();
-            return listEmployeeShifts;                                                   
-        }
+        //public async Task<List<EmployeeShift>> GetListEmployeeShiftInSchedule(int scheduleId)
+        //{
+        //    var listEmployeeShifts = await _dbcontext.EmployeeShifts.Where(e => e.ScheduleId == scheduleId)
+        //                                                            .Include(e => e.Employee)
+        //                                                            .Include(e => e.Shift)
+        //                                                            .ToListAsync();
+        //    return listEmployeeShifts;                                                   
+        //}
 
         public async Task<Schedule> GetScheduleById(int scheduleId)
         {

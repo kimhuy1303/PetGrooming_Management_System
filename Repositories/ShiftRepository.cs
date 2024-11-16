@@ -46,6 +46,13 @@ namespace PetGrooming_Management_System.Repositories
             return await _dbContext.Shifts.FirstOrDefaultAsync(e => e.Id == id);
         }
 
+        public async Task<int> GetWorkHoursInTimeSlot(int shiftId)
+        {
+            var shift = await GetShiftById(shiftId);
+            int workHours = shift.EndTime.Value.Hour - shift.StartTime.Value.Hour;
+            return workHours;
+        }
+
         public async Task<bool> UpdateShift(int id, ShiftRequest shiftDTO)
         {
             var shift = await GetShiftById(id);

@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using PetGrooming_Management_System.Configs.Constant;
 using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Utils;
+using System.Security.Claims;
 namespace PetGrooming_Management_System.Controllers
 {
     [Route("api/[controller]")]
@@ -77,12 +80,69 @@ namespace PetGrooming_Management_System.Controllers
         {
             var appointment = await _appointmentRepository.GetAppointmentById(appointmentId);
             if (appointment == null) return NotFound();
-            await _appointmentRepository.ChangeStatusAppointment(appointment, Configs.Constant.Status.InProgress);
+            await _appointmentRepository.ChangeStatusAppointment(appointment, "InProgress");
             var appointmentDetail = await _appointmentRepository.ViewAppointmentDetail(appointment.Id);
             var message = "The customer's appointment has been confirmed by staff. Please check your appointment history to see details!";
             //await _notificationRepository.SendNotificationToCustomer(message, (int)appointment.CustomerId, appointment.Id);
             return Ok("Appointment confirmed from staff!");
         }
 
+        [HttpPut("Edit/{id}")]
+        [Authorize(Roles = "Manager, Employee")]
+        public async Task<ActionResult> EditAppointment(int id, [FromForm] AppointmentRequest appointmentdto)
+        {
+            if (appointmentdto == null) return BadRequest(ModelState);
+            var appointment = await _appointmentRepository.GetAppointmentById(id);
+            if (appointment == null) return BadRequest("Appointment does not exist!");
+            await _appointmentRepository.UpdateAppointment(id, appointmentdto);
+            return Ok("Edit appointment successfully!");
+        }
+
+        [HttpPut("UpdateStatus/{id}")]
+        [Authorize(Roles = "Manager, Employee")]
+        public async Task<ActionResult> UpdateAppointmentStatus(int id, string statusString)
+        {
+            if (string.IsNullOrEmpty(statusString)) return BadRequest("Status field is required!");
+            var appointment = await _appointmentRepository.GetAppointmentById(id);
+            if (appointment == null) return BadRequest("Appointment does not exist!");
+            await _appointmentRepository.ChangeStatusAppointment(appointment, statusString);
+            var message = "Your appointment (ID: " + appointment.Id + ") is " + statusString;
+            //await _notificationRepository.SendNotificationToCustomer(message, (int)appointment.CustomerId, appointment.Id);
+            return Ok("Update status successfully!");
+        }
+
+        [HttpPut("RequestCancel/{id}")]
+        [Authorize(Roles = "Customer")]
+        public async Task<ActionResult> RequestCancel(int id)
+        {
+            var appointment = await _appointmentRepository.GetAppointmentById(id);
+            var userIdFromToken = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+            if (appointment.CustomerId.ToString() != userIdFromToken) return Forbid("You do not have permission to request cancel this appointment.");
+            if (appointment == null) return NotFound(new { message = "Appointment not found" });
+            if (appointment.Status == Status.Canceled || appointment.Status == Status.PendingCancellation)
+            {
+                return BadRequest(new { message = "Appointment is already canceled or pending cancellation" });
+            }
+
+            await _appointmentRepository.ChangeStatusAppointment(appointment, "PendingCancellation");
+            return Ok(new { message = "Cancellation request submitted. Waiting for confirmation." });
+        }
+
+        [HttpPut("ConfirmCancel/{id}")]
+        [Authorize(Roles = "Employee, Manager")]
+        public async Task<ActionResult> ConfirmCancel(int id, bool isApprove)
+        {
+            var appointment = await _appointmentRepository.GetAppointmentById(id);
+            if (appointment.Status != Status.PendingCancellation) return BadRequest(new { message = "Appointment is not pending cancellation" });
+            if (isApprove)
+            {
+                await _appointmentRepository.ChangeStatusAppointment(appointment, "Canceled");
+            }
+            else
+            {
+                await _appointmentRepository.ChangeStatusAppointment(appointment, "InProgress");
+            }
+            return Ok(new { message = isApprove ? "Appointment canceled." : "Cancellation request denied." });
+            }
     }
 }

@@ -66,28 +66,8 @@ namespace PetGrooming_Management_System.Services
                         }
                     }
                 }
-            }
-            
-               
+            }     
             return await Backtrack(start.AddDays(1), end);
-        }
-
-        public async Task UpdateWorkHours()
-        {
-            foreach (var item in tempWorkHours)
-            {
-                var employeeId = item.Key;
-                var totalWorkHours = item.Value;
-
-                // Lấy Employee từ cơ sở dữ liệu
-                var employee = await _employeeRepository.GetEmployeeById(employeeId);
-
-                // Cập nhật TotalWorkHours vào cơ sở dữ liệu
-                await _employeeShiftRepository.UpdateTotalHoursWorkOfEmployee(totalWorkHours, employee);
-            }
-
-            // Xóa trạng thái tạm thời sau khi cập nhật
-            tempWorkHours.Clear();
         }
     }
 }

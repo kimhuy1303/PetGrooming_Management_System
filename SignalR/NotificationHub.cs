@@ -17,6 +17,10 @@ namespace PetGrooming_Management_System.SignalR
             await Clients.Group("Employee").SendAsync("ReceiveNotification ", message);
         }
 
+        public async Task SendNotificationToManagers(string message)
+        {
+            await Clients.Group("Manager").SendAsync("ReceiveNotification ", message);
+        }
 
         public override Task OnConnectedAsync()
         {
@@ -24,6 +28,9 @@ namespace PetGrooming_Management_System.SignalR
             if (userRole == "Employee")
             {
                 Groups.AddToGroupAsync(Context.ConnectionId, "Employee");
+            }else if(userRole == "Manager")
+            {
+                Groups.AddToGroupAsync(Context.ConnectionId, "Manager");
             }
             return base.OnConnectedAsync();
         }

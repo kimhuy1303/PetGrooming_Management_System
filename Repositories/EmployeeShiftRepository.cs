@@ -21,30 +21,47 @@ namespace PetGrooming_Management_System.Repositories
             _shiftRepository = shiftRepository;
 
         }
-        public async Task<bool> RegisterShift(EmployeeShiftRequest registerShiftdto)
+        public async Task<bool> RegisterShift(RegisterShiftRequest registerShiftdto)
         {
-            if (registerShiftdto.Date.Date >= DateTime.Now.Date)
+            var emloyee = await _employeeRepository.GetEmployeeById(registerShiftdto.EmployeeId);
+            int flag = 0;
+            foreach (var shiftdto in registerShiftdto.ShiftRequests) 
             {
-                var existingEmployeeShift = await IsExist(registerShiftdto);
-                if (existingEmployeeShift != true)
+                if (shiftdto.Date.Date >= DateTime.Now.Date)
                 {
-                    var emloyee = await _employeeRepository.GetEmployeeById(registerShiftdto.EmployeeId);
-                    var shift = await _shiftRepository.GetShiftById(registerShiftdto.ShiftId);
-                    var assignedShift = new EmployeeShift()
+                    var employeeShift = new EmployeeShiftRequest
                     {
-                        EmployeeId = registerShiftdto.EmployeeId,
-                        Employee = emloyee,
-                        ShiftId = registerShiftdto.ShiftId,
-                        Shift = shift,
-                        Date = registerShiftdto.Date.Date,
+                        EmployeeId = emloyee.Id,
+                        ShiftId = shiftdto.ShiftId,
+                        Date = shiftdto.Date,
                     };
-                    await _dbcontext.EmployeeShifts.AddAsync(assignedShift);
-                    await _dbcontext!.SaveChangesAsync();
-                    return true;
+                    var existingEmployeeShift = await IsExist(employeeShift);
+                    if (existingEmployeeShift != true)
+                    {
+                        var shift = await _shiftRepository.GetShiftById(shiftdto.ShiftId);
+                        var assignedShift = new EmployeeShift()
+                        {
+                            EmployeeId = registerShiftdto.EmployeeId,
+                            Employee = emloyee,
+                            ShiftId = shift.Id,
+                            Shift = shift,
+                            Date = shiftdto.Date.Date,
+                        };
+                        await _dbcontext.EmployeeShifts.AddAsync(assignedShift);
+                        await _dbcontext!.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        flag=1;
+                    }
                 }
-                return false;
+                else
+                {
+                    flag=1;
+                }
             }
-            return false;
+            if (flag != 0) return false;
+            return true;
         }
 
         public async Task<ICollection<EmployeeShift>> GetEmployeeShiftsByIdForAWeek(int id, DateTime start, DateTime end)

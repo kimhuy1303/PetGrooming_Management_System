@@ -32,13 +32,16 @@ namespace PetGrooming_Management_System.Controllers
 
         [HttpPost("RegisterShift")]
         [Authorize(Roles = "Employee, Manager")]
-        public async Task<ActionResult> RegisterShift([FromBody] EmployeeShiftRequest registerShiftdto)
+        public async Task<ActionResult> RegisterShift([FromBody] RegisterShiftRequest registerShiftdto)
         {
             if(registerShiftdto == null) return BadRequest(ModelState);
             var employee =  await _employeeRepository.GetEmployeeById(registerShiftdto.EmployeeId);
-            var shift = await _shiftRepository.GetShiftById(registerShiftdto.ShiftId);
             if (employee == null) return BadRequest("Employee does not exist!");
-            if (shift == null) return BadRequest("Shift does not exist!");
+            foreach (var shiftdto in registerShiftdto.ShiftRequests) 
+            {
+                var shift = await _shiftRepository.GetShiftById(shiftdto.ShiftId);
+                if (shift == null) return BadRequest("Shift does not exist!");
+            }
             var res = await _employeeShiftRepository.RegisterShift(registerShiftdto);
             if(res != true) return BadRequest("Date is not valid or employee had registered shift in this date!");
             return Ok("Registering shift successfully");

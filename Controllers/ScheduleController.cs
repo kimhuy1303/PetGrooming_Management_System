@@ -31,9 +31,9 @@ namespace PetGrooming_Management_System.Controllers
         {
             if (new ValidateDateTime().DayRange(start, end) != 5) return BadRequest("Date is not valid for scheduling!");
             if (start.Date < DateTime.UtcNow && end.Date < DateTime.UtcNow) return BadRequest("Date is overdue for scheduling");
-            var amountEmployeeShiftsAssigned = await _employeeShiftRepository.GetNumberOfEmployeeRegisterShiftForAWeek(start, end);
-            if (amountEmployeeShiftsAssigned < await _employeeRepository.CountEmployee()) return BadRequest("The number of registered employees is not enough!");
-            var raw = await _scheduleRepository.RawSchedule(start, end);
+            //var amountEmployeeShiftsAssigned = await _employeeShiftRepository.GetNumberOfEmployeeRegisterShiftForAWeek(start, end);
+            //if (amountEmployeeShiftsAssigned < await _employeeRepository.CountEmployee()) return BadRequest("The number of registered employees is not enough!");
+            var raw = await _scheduleRepository.RawSchedule(start, end); 
             return Ok(raw);
         }
         [HttpPost("ConfirmSchedule")]

@@ -12,6 +12,6 @@ namespace PetGrooming_Management_System.IRepositories
         Task<Boolean> DeleteShiftById(int id);
         Task<Boolean> UpdateShift(int id, ShiftRequest shiftDTO);
 
-        
+        Task<int> GetWorkHoursInTimeSlot(int shiftId);
     }
 }

@@ -6,7 +6,7 @@ namespace PetGrooming_Management_System.IRepositories
 {
     public interface IEmployeeShiftRepository
     {
-        Task<Boolean> RegisterShift(EmployeeShiftRequest registerShiftdto);
+        Task<Boolean> RegisterShift(RegisterShiftRequest registerShiftdto);
 
         Task<ICollection<EmployeeShift>> GetEmployeeShiftsByIdForAWeek(int id, DateTime start, DateTime end);
 

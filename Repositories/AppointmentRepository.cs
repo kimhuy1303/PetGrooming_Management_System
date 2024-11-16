@@ -13,11 +13,14 @@ namespace PetGrooming_Management_System.Repositories
         private readonly MainDBContext _dbcontext;
         private readonly IComboRepository _comboRepository;
         private readonly IUserRepository _userRepository;
-        public AppointmentRepository(MainDBContext dbcontext, IComboRepository comboRepository, IUserRepository userRepository)
+        private readonly IEmployeeRepository _employeeRepository;
+        public AppointmentRepository(MainDBContext dbcontext, IComboRepository comboRepository, IUserRepository userRepository, IEmployeeRepository employeeRepository)
         {
             _dbcontext = dbcontext;
             _comboRepository = comboRepository;
             _userRepository = userRepository;
+            _employeeRepository = employeeRepository;
+
         }
 
         public async Task AddServicesToAppointment(int appointmentDetailId, AppointmentServicesRequest appointmentservicesdto)
@@ -31,19 +34,12 @@ namespace PetGrooming_Management_System.Repositories
             await _dbcontext.SaveChangesAsync();
         }
 
-        public async Task CancelAppointment(int appointmentId)
-        {
-            var appointment = await GetAppointmentById(appointmentId);
-            appointment.Status = Configs.Constant.Status.Canceled;
-            await _dbcontext.SaveChangesAsync();
-        }
-
         public async Task<AppointmentDetail> MakeAnAppointment(int customerId, AppointmentRequest appointmentdto)
         {
             var appointment = await CreateAppointment(appointmentdto, customerId);
             var appointmentDetail = await CreateAppointmentDetail(appointment.Id, appointmentdto.AppointmentDetail);
 
-            // Case1 : Nếu 
+            // Nếu có dịch vụ và không có combo
             if (!appointmentdto.AppointmentDetail.AppointmentServices.IsNullOrEmpty() && appointmentdto.AppointmentDetail.comboId == 0) 
             {
                 
@@ -51,11 +47,13 @@ namespace PetGrooming_Management_System.Repositories
                 {
                     await AddServicesToAppointment(appointmentDetail.Id, service);
                 }
+            // Nếu có combo và không có dịch vụ
             }else if (appointmentdto.AppointmentDetail.AppointmentServices.IsNullOrEmpty() && appointmentdto.AppointmentDetail.comboId != 0)
             {
                 appointmentDetail.ComboId = appointmentdto.AppointmentDetail.comboId;
                 await _dbcontext.SaveChangesAsync();
             }
+            // Nếu có cả combo và dịch vụ
             else if(!appointmentdto.AppointmentDetail.AppointmentServices.IsNullOrEmpty() && appointmentdto.AppointmentDetail.comboId != 0)
             {
                 foreach (AppointmentServicesRequest service in appointmentdto.AppointmentDetail.AppointmentServices)
@@ -74,7 +72,6 @@ namespace PetGrooming_Management_System.Repositories
             {
                 TimeWorking = appointmentdetaildto.TimeWorking,
                 AppointmentId = appointmentId,
-                EmployeeId = appointmentdetaildto.EmployeeId
             };
             await _dbcontext.AppointmentDetails.AddAsync(appointmentDetail);
             await _dbcontext.SaveChangesAsync();
@@ -107,7 +104,32 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task UpdateAppointment(int appointmentId, AppointmentRequest appointmentdto)
         {
-            throw new NotImplementedException();
+            var appointment = await GetAppointmentById(appointmentId);
+            if (appointment != null)
+            {
+                appointment.Name = appointmentdto.CustomerName;
+                appointment.PhoneNumber = appointmentdto.CustomerPhoneNumber;
+                appointment.Email = appointmentdto.CustomerEmail;
+                appointment.Address = appointmentdto.CustomerAddress;
+                if(Enum.TryParse(typeof(Status), appointmentdto.StatusString, true, out var parsedStatus))
+                {
+                    appointment.Status = (Status)parsedStatus;
+                }
+            }
+            await _dbcontext.SaveChangesAsync();
+            var appointmentDetail = await _dbcontext.AppointmentDetails
+                                                    .FirstOrDefaultAsync(e => e.AppointmentId == appointmentId);
+            if (appointmentDetail != null) 
+            {
+                var newEmployee = await _employeeRepository.GetEmployeeById(appointmentdto.AppointmentDetail.EmployeeId);
+                var newCombo = await _comboRepository.GetComboById((int)appointmentdto.AppointmentDetail.comboId);
+                appointmentDetail.EmployeeId = newEmployee.Id;
+                appointmentDetail.Employee = newEmployee;
+                appointmentDetail.ComboId = appointmentDetail.ComboId;
+                appointmentDetail.Combo = newCombo;
+                appointmentDetail.TimeWorking = appointmentdto.AppointmentDetail.TimeWorking;
+            }
+            await _dbcontext.SaveChangesAsync();
         }
 
         public async Task<object> ViewAppointmentDetail(int appointmentId)
@@ -152,17 +174,23 @@ namespace PetGrooming_Management_System.Repositories
                 Address = appointmentdto.CustomerAddress,
                 CreatedDate = DateTime.UtcNow,
                 Status = Configs.Constant.Status.Pending,
-                CustomerId = customerId,
-                Customer = await _userRepository.GetUserById(customerId)
             };
+            if (customerId != 0) 
+            {
+                newAppointment.CustomerId = customerId;
+                newAppointment.Customer = await _userRepository.GetUserById(customerId);
+            }
             await _dbcontext.Appointments.AddAsync(newAppointment);
             await _dbcontext.SaveChangesAsync();
             return newAppointment;
         }
 
-        public async Task ChangeStatusAppointment(Appointment appointment, Status status)
+        public async Task ChangeStatusAppointment(Appointment appointment, string status)
         {
-            appointment.Status = status;
+            if (Enum.TryParse(typeof(Status), status, true, out var parsedStatus))
+            {
+                appointment.Status = (Status)parsedStatus;
+            }
             await _dbcontext.SaveChangesAsync();
         }
     }

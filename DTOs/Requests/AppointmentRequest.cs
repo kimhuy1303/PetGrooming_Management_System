@@ -1,4 +1,5 @@
-﻿using PetGrooming_Management_System.Models;
+﻿using PetGrooming_Management_System.Configs.Constant;
+using PetGrooming_Management_System.Models;
 
 namespace PetGrooming_Management_System.DTOs.Requests
 {
@@ -8,7 +9,8 @@ namespace PetGrooming_Management_System.DTOs.Requests
         public string? CustomerPhoneNumber { get; set; }
         public string? CustomerEmail { get; set; }
         public string? CustomerAddress { get; set; }
-        public AppointmentDetailRequest AppointmentDetail { get; set; }
+        public string? StatusString { get; set; }
+        public AppointmentDetailRequest? AppointmentDetail { get; set; }
     }
 
     public class AppointmentDetailRequest
