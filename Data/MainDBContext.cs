@@ -40,12 +40,6 @@ namespace PetGrooming_Management_System.Data
             modelBuilder.Entity<Employee>()
                 .Property(e => e.TotalWorkHours)
                 .HasDefaultValue(0);
-            modelBuilder.Entity<Employee>()
-                .Property(e => e.WorkStatus)
-                .HasDefaultValue(false);
-            modelBuilder.Entity<Employee>()
-                .Property(e => e.IsWorking)
-                .HasDefaultValue(false);
             modelBuilder.Entity<UserAnnouncements>()
                 .Property(e => e.HasRead)
                 .HasDefaultValue(false);
@@ -110,9 +104,14 @@ namespace PetGrooming_Management_System.Data
                 .HasOne(e => e.Service)
                 .WithMany(e => e.AppointmentServices)
                 .HasForeignKey (e => e.ServiceId);
-
             modelBuilder.Entity<ComboServices>()
             .HasKey(cs => new { cs.ComboId, cs.ServiceId, cs.PetName, cs.PetWeight });
+
+            modelBuilder.Entity<AppointmentDetail>()
+                .HasOne(ad => ad.Combo)
+                .WithMany(c => c.AppointmentDetails)
+                .HasForeignKey(ad => ad.ComboId) // FK tới Combo
+                .IsRequired(false); // ComboId có thể NULL
 
             base.OnModelCreating(modelBuilder);
 

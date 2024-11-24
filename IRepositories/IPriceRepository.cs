@@ -1,4 +1,5 @@
 ﻿using PetGrooming_Management_System.DTOs.Requests;
+using PetGrooming_Management_System.DTOs.Responses;
 using PetGrooming_Management_System.Models;
 
 namespace PetGrooming_Management_System.IRepositories
@@ -11,6 +12,7 @@ namespace PetGrooming_Management_System.IRepositories
         Task<Price> IsPriceExist(PriceRequest pricedto);
         Task AddPrice(int priceid, int serviceid);
 
+        Task<ICollection<PetResponse>> GetPets(); 
 
     }
 }

@@ -19,8 +19,8 @@ namespace PetGrooming_Management_System.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Manager, Employee")]
-        public async Task<ActionResult> GetAllCustomers() {
-            var customers = await _userRepository.GetAll();
+        public async Task<ActionResult> GetAllCustomers(int page=1, int size=10) {
+            var customers = await _userRepository.GetAll(page,size);
             if (customers.IsNullOrEmpty()) return BadRequest("Customers are null or empty!");
             return Ok(customers);
         }
@@ -43,7 +43,7 @@ namespace PetGrooming_Management_System.Controllers
             return Ok(new {message = "Updating customer info successfully!",  customer = customer});
         }
 
-        [HttpGet("Search-Customers")]
+        [HttpGet("Search")]
         [Authorize(Roles = "Manager, Employee")]
         public async Task<ActionResult> SearchCustomers(string key)
         {

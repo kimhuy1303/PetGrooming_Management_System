@@ -6,6 +6,7 @@ using PetGrooming_Management_System.Models;
 using PetGrooming_Management_System.Utils;
 using PetGrooming_Management_System.Configs.Constant;
 using Azure.Core;
+using PetGrooming_Management_System.DTOs.Responses;
 
 
 namespace PetGrooming_Management_System.Repositories
@@ -56,9 +57,9 @@ namespace PetGrooming_Management_System.Repositories
             return result;
         }
 
-        public async Task<ICollection<User>> GetAll()
+        public async Task<ICollection<User>> GetAll(int page, int size)
         {
-            var result = await _dbContext.Users.Where(e => e.Role == Config.Constant.Role.Customer).ToListAsync();
+            var result = await _dbContext.Users.Where(e => e.Role == Config.Constant.Role.Customer).Skip((page - 1) * size).Take(size).ToListAsync();
             return result;
         }
 
@@ -88,6 +89,22 @@ namespace PetGrooming_Management_System.Repositories
             _user.DateOfBirth = request.DateOfBirth;
             _dbContext.SaveChanges();
             return _user;
+        }
+
+        public async Task<ProfileResponse> ViewProfile(int id)
+        {
+            var profile = await _dbContext.Users.FirstOrDefaultAsync(e => e.Id == id);
+            return new ProfileResponse
+            {
+                FullName = profile.FullName != null ? profile.FullName : "",
+                Email = profile.Email != null ? profile.Email : "",
+                Address = profile.Address != null ? profile.Address : "" ,
+                Gender = profile.Gender != null ? profile.Gender : "",
+                PhoneNumber = profile.PhoneNumber != null ? profile.PhoneNumber : "",
+                AvatarPath = profile.AvatarPath != null ? profile.AvatarPath : "",
+                DateOfBirth = profile.DateOfBirth != null ? profile.DateOfBirth.Value.Date : new DateTime(),
+                IdentificationNumber = profile?.IdentificationNumber != null ? profile.IdentificationNumber : "",
+            };
         }
     }
 }

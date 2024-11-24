@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
+using PetGrooming_Management_System.DTOs.Responses;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace PetGrooming_Management_System.Repositories
                 ServiceName = servicedto.ServiceName,
                 Description = servicedto.Description,
                 DateCreated = DateTime.UtcNow,
-                IsActive = false
+                IsActive = servicedto.IsActive
             };
             await _dbContext.Services.AddAsync(newService);
             await _dbContext.SaveChangesAsync();
@@ -51,6 +52,13 @@ namespace PetGrooming_Management_System.Repositories
             var listServices = await _dbContext.Services.Include(e => e.Prices).ToListAsync();
             return listServices;
         }
+
+        public async Task<double> GetPriceService(int id, string petName, string petWeight)
+        {
+            var price = await GetServiceByPet(id, petName, petWeight);
+            return price.Prices.FirstOrDefault().PriceValue;
+        }
+
         public async Task<Service> GetServiceById(int id)
         {
             return await _dbContext.Services
@@ -74,12 +82,19 @@ namespace PetGrooming_Management_System.Repositories
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
         
-        public async Task<ICollection<Service>> GetServicesByPet(string petName, string petWeight)
+        public async Task<ICollection<ServiceResponse>> GetServicesByPet(string petName, string petWeight)
         {
-            return await _dbContext.Services
-                .Where(price => price.Prices.Any(e => e.PetName == petName && e.PetWeight == petWeight))
-                .ToListAsync()
-                ;
+            var services = await _dbContext.Services
+                            .Where(price => price.Prices.Any(e => e.PetName == petName && e.PetWeight == petWeight))
+                            .Include(x => x.Prices.Where(price => price.PetName == petName && price.PetWeight == petWeight).Take(1))
+                            .ToListAsync();
+            var res = services.Select(s => new ServiceResponse
+            {
+                ServiceId = s.Id,
+                ServiceName = s.ServiceName,
+                Price = s.Prices.FirstOrDefault().PriceValue
+            }).ToList();
+            return res;
         }
 
         public async Task<bool> IsServiceExist(int id, PriceRequest pricedto)
@@ -89,6 +104,12 @@ namespace PetGrooming_Management_System.Repositories
                 .Where(e => e.Id == id)
                 .AnyAsync(e => e.Prices.Any(e => e.Id == price.Id));
             return isExist;
+        }
+
+        public async Task RemovePrice(Service service, Price price)
+        {
+            service.Prices.Remove(price);
+            await _dbContext.SaveChangesAsync();
         }
 
         public async Task<ICollection<Service>> SearchService(string key)
@@ -106,6 +127,7 @@ namespace PetGrooming_Management_System.Repositories
         {
             service.ServiceName = servicedto.ServiceName;
             service.Description = servicedto.Description;
+            service.IsActive = servicedto.IsActive;
             //await _priceRepository.AddPrice(service.Id,servicedto.PriceRequest);
             await _dbContext.SaveChangesAsync();
             return service;

@@ -58,18 +58,33 @@ namespace PetGrooming_Management_System.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Manager, Employee")]
-        public async Task<ActionResult> EditEmployeeShifts(int id, [FromBody] EmployeeShiftRequest editdto)
+        public async Task<ActionResult> EditEmployeeShifts(int id, [FromBody] RegisterShiftRequest editdto)
         {
             if (editdto == null) return BadRequest(ModelState);
 
             if (id != editdto.EmployeeId) return BadRequest("EmployeeId does not exist or does not register shift");
-            var isExist = await _employeeShiftRepository.GetEmployeeShift(editdto.EmployeeId, editdto.Date);
-            if(isExist != null)
+            foreach(var shiftdto in editdto.ShiftRequests)
             {
-                // remove shift cũ
-                await _employeeShiftRepository.DeleteEmployeeShift(editdto);
+                var isExist = await _employeeShiftRepository.GetEmployeeShift(editdto.EmployeeId, shiftdto.Date);
+                if(isExist != null)
+                {
+                    // remove shift cũ
+                    
+                    await _employeeShiftRepository.DeleteEmployeeShift(new EmployeeShiftRequest
+                    {
+                        EmployeeId = editdto.EmployeeId,
+                        ShiftId = shiftdto.ShiftId,
+                        Date = shiftdto.Date
+                    });
+                }
+                // update shift mới
+                await _employeeShiftRepository.UpdateEmployeeShift(new EmployeeShiftRequest
+                {
+                    EmployeeId = editdto.EmployeeId,
+                    ShiftId = shiftdto.ShiftId,
+                    Date = shiftdto.Date
+                });
             }
-            await _employeeShiftRepository.UpdateEmployeeShift(editdto);
             return Ok("Updating shifts successfully!");
         }
 

@@ -14,6 +14,6 @@ namespace PetGrooming_Management_System.Models
 
         // Navigate
         public List<ComboServices> ComboServices { get; } = new List<ComboServices>();
-        public AppointmentDetail? AppointmentDetail { get; set; }
+        public List<AppointmentDetail> AppointmentDetails { get; set; } = new List<AppointmentDetail>();
     }
 }

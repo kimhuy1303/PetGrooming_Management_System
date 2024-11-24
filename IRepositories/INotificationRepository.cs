@@ -11,6 +11,7 @@ namespace PetGrooming_Management_System.IRepositories
         public Task<Annoucement> Add(string message);
         Task<List<Annoucement>> GetListByUserId(int userId);
         Task MarkAsRead(int annoucementId, int userId);
+        Task<IEnumerable<UserAnnouncements>> GetAnnouncementsUnread(int userId);
 
     }
 }

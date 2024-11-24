@@ -36,7 +36,7 @@ namespace PetGrooming_Management_System.Controllers
                 // Generate token jwt
                 var token = _jwtService.generateJwtToken(_user.Username!, _user.Role, _user.PhoneNumber!, _user.Id);
 
-                    return Ok(new { token });
+                    return Ok(new { token = token });
                 }
                 catch (Exception ex)
                 {

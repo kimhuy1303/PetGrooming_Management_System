@@ -4,6 +4,7 @@ using PetGrooming_Management_System.DTOs.Requests;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
 using PetGrooming_Management_System.Utils;
+using System.Drawing;
 
 namespace PetGrooming_Management_System.Repositories
 {
@@ -48,6 +49,10 @@ namespace PetGrooming_Management_System.Repositories
             await _dbcontext.SaveChangesAsync();
         }
 
+        public async Task<ICollection<Employee>> GetEmployeesPaged(int page, int size)
+        {
+            return await _dbcontext!.Employees.Skip((page -1 ) * size).Take(size).ToListAsync();
+        }
         public async Task<ICollection<Employee>> GetAllEmployees()
         {
             return await _dbcontext!.Employees.ToListAsync();

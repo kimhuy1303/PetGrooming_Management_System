@@ -41,10 +41,13 @@ builder.Services.AddScoped<IPriceRepository, PriceRepository>();
 builder.Services.AddScoped<IComboRepository, ComboRepository>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
-builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<NotificationHub>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<ScheduleService>();
 builder.Services.AddScoped<JWTService>();
+
+// Add Background Service
+builder.Services.AddHostedService<AppointmentCancelAutomation>();
 
 
 // Connect Database

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
+using PetGrooming_Management_System.DTOs.Responses;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
 
@@ -53,5 +54,10 @@ namespace PetGrooming_Management_System.Repositories
             return price;
         }
 
+        public async Task<ICollection<PetResponse>> GetPets()
+        {
+            var pets = await _dbcontext.Prices.AsNoTracking().GroupBy(e => new {e.PetName, e.PetWeight}).Select(g => new PetResponse { PetName = g.Key.PetName, PetWeight = g.Key.PetWeight}).ToListAsync();
+            return pets;
+        }
     }
 }

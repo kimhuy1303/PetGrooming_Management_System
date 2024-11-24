@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
+using PetGrooming_Management_System.DTOs.Responses;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
 using PetGrooming_Management_System.Services;
@@ -89,11 +90,27 @@ namespace PetGrooming_Management_System.Repositories
             return await _dbcontext.Schedules.FirstOrDefaultAsync(e => e.Id == scheduleId);
         }
 
-        public async Task<Schedule> GetScheduleByWeek(DateTime start, DateTime end)
+        public async Task<ScheduleResponse> GetScheduleByWeek(DateTime start, DateTime end)
         {
-            var res = await _dbcontext.Schedules.Include(e => e.EmployeeShifts).FirstOrDefaultAsync(e => e.startDate.Date >= start.Date && e.endDate.Date <= end.Date);
-            if (res != null) res.EmployeeShifts = res.EmployeeShifts.OrderBy(s => s.Date).ToList();
-            return res;
+            //var res = await _dbcontext.Schedules.Include(e => e.EmployeeShifts).FirstOrDefaultAsync(e => e.startDate.Date >= start.Date && e.endDate.Date <= end.Date);
+            //if (res != null) res.EmployeeShifts = res.EmployeeShifts.OrderBy(s => s.Date).ToList();
+            //return new ScheduleResponse
+            //{
+            //    ScheduleId = res.Id,
+
+            //};
+            return await _dbcontext.Schedules.Where(e => e.startDate.Date >= start.Date && e.endDate.Date <= end.Date).Select(e => new ScheduleResponse
+            {
+                ScheduleId = e.Id,
+                EmployeeShifts = e.EmployeeShifts.Select(e => new EmployeeShiftResponse
+                {
+                    ShiftId = e.ShiftId,
+                    TimeSlot = e.Shift.TimeSlot,
+                    EmployeeId = e.EmployeeId,
+                    EmployeeName = e.Employee.FullName,
+                    Date = e.Date.Date
+                }).OrderBy(e => e.Date).ToList()
+            }).FirstOrDefaultAsync();
         }
 
         public async Task RemoveEmployeeShift(int scheduleId, EmployeeShiftRequest employeeshiftdto)
@@ -111,12 +128,14 @@ namespace PetGrooming_Management_System.Repositories
             return await _dbcontext.EmployeeShifts.FirstOrDefaultAsync(e => e.ScheduleId == scheduleId && e.EmployeeId == employeeshiftdto.EmployeeId && e.Date.Date == employeeshiftdto.Date.Date && e.ShiftId == employeeshiftdto.ShiftId);
         }
 
-        public async Task<IEnumerable<object>> GetEmployeeShiftsByEmployee(int employeeId, Schedule schedule)
+        public async Task<IEnumerable<EmployeeShiftResponse>> GetEmployeeShiftsByEmployee(int employeeId, ScheduleResponse schedule)
         {
 
-            var result = schedule.EmployeeShifts.Where(e => e.EmployeeId == employeeId).Select(shift => new
+            var result = schedule.EmployeeShifts.Where(e => e.EmployeeId == employeeId).Select(shift => new EmployeeShiftResponse
             {
                 EmployeeId = shift.EmployeeId,
+                TimeSlot = shift.TimeSlot,
+                EmployeeName = shift.EmployeeName,
                 ShiftId = shift.ShiftId,
                 Date = shift.Date,
             }).ToList();

@@ -35,8 +35,15 @@ namespace PetGrooming_Management_System.Controllers
             if (combo == null) return NotFound();
             return Ok(combo);
         }
+        [HttpGet("GetListComboByPet")]
+        public async Task<ActionResult> GetListComboByPet(string petName, string petWeight)
+        {
+            var combo = await _comboRepository.GetListComboByPet(petName, petWeight);
+            if (combo == null) return NotFound();
+            return Ok(combo);
+        }
 
-        [HttpPost("Create-combo")]
+        [HttpPost("CreateCombo")]
         [Authorize(Roles = "Manager")]
         public async Task<ActionResult<Combo>> CreateCombo([FromBody] ComboRequest combodto)
         {
@@ -47,13 +54,14 @@ namespace PetGrooming_Management_System.Controllers
             return Ok(new { message = "Creating combo succesfully", combo =  newCombo });
         }
 
-        [HttpPost("Add-services")]
+        [HttpPost("AddServicesToCombo/{id}")]
         [Authorize(Roles = "Manager")]
-        public async Task<ActionResult<Combo>> AddServicesToCombo([FromBody] ComboServiceRequest comboServicedto)
+        public async Task<ActionResult<Combo>> AddServicesToCombo(int id, [FromBody] ComboServiceRequest comboServicedto)
         {
             if (comboServicedto == null) return BadRequest(ModelState);
-            var combo = await _comboRepository.GetComboById(comboServicedto.ComboId);
-            if (combo == null) return NotFound();
+            if (id != comboServicedto.ComboId) return BadRequest(new {message = "ComboId does not match!"});
+            var combo = await _comboRepository.GetComboById(id);
+            if (combo == null) return NotFound(new {message = "Combo does not exist!"});
             combo = await _comboRepository.AddServicesToCombo(comboServicedto);
             return Ok(new { message = "Adding services to combo successfully", combo = combo });
         }

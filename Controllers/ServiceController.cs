@@ -38,7 +38,7 @@ namespace PetGrooming_Management_System.Controllers
             if (service == null) return NotFound();
             return Ok(service);
         }
-        [HttpGet("By-Pet")]
+        [HttpGet("ByPet")]
         public async Task<ActionResult<Service>> GetServicesByPet(string petName, string petWeight)
         {
             if (petName.IsNullOrEmpty()|| petWeight.IsNullOrEmpty()) return BadRequest(ModelState);
@@ -83,10 +83,24 @@ namespace PetGrooming_Management_System.Controllers
         public async Task<ActionResult> DeleteService(int id)
         {
             var service = await _serviceRepository.GetServiceById(id);
-            if (service == null) return NotFound();
+            if (service == null) return NotFound(new {message = "Service does not found!"});
             
             await _serviceRepository.DeleteService(service);
             return Ok("Deleting service successfully");
         }
+
+        [HttpPut("RemovePrice/{id}")]
+        [Authorize(Roles = "Manager")]
+        public async Task<ActionResult> RemovePriceService(int id, PriceRequest pricedto)
+        {
+            var service = await _serviceRepository.GetServiceById(id);
+            if (service == null) return NotFound(new { message = "Service does not found!" });
+            var price = await _priceRepository.IsPriceExist(pricedto);
+            if (price == null) return NotFound(new { message = "Service does not have this price!" });
+            await _serviceRepository.RemovePrice(service, price);
+            return Ok(new { message = "Remove price successfully!" });
+        }
+
+        
     }
 }

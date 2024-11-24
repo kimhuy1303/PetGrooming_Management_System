@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using PetGrooming_Management_System.IRepositories;
@@ -16,9 +17,10 @@ namespace PetGrooming_Management_System.Controllers
         }
 
         [HttpGet("/Announcements/{id}")]
-        public async Task<ActionResult> GetAllAnnouncementsByUserId(int userId)
+        [Authorize]
+        public async Task<ActionResult> GetAllAnnouncementsByUserId(int id)
         {
-            var res = await _notificationRepository.GetListByUserId(userId);
+            var res = await _notificationRepository.GetListByUserId(id);
             if (res.IsNullOrEmpty()) return BadRequest("User has no annoucements");
             return Ok(res);
         }

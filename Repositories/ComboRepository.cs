@@ -2,6 +2,7 @@
 using Microsoft.IdentityModel.Tokens;
 using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
+using PetGrooming_Management_System.DTOs.Responses;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
 using System.Collections.Immutable;
@@ -26,22 +27,22 @@ namespace PetGrooming_Management_System.Repositories
             foreach(int serviceId in listservicesdto.ListServicesId)
             {
                 var service = await _serviceRepository.GetServiceById(serviceId);
-                if (service != null)
+                if (service != null && service.IsActive == true)
                 {
                     listService.Add(service);
                 }
             }
             foreach(Service s in listService)
             {
-                var price = s.Prices.FirstOrDefault(p => p.PetName == listservicesdto.PetName
-                                                      && p.PetWeight == listservicesdto.PetWeight);
+                var price = s.Prices.Where(p => p.PetName == listservicesdto.PetName
+                                                      && p.PetWeight == listservicesdto.PetWeight).Sum(e => e.PriceValue) * (1.0 - DiscountCombo(listService.Count()).Result);
                 var comboService = new ComboServices
                 {
                     Combo = combo,
                     Service = s,
                     PetName = listservicesdto.PetName,
                     PetWeight = listservicesdto.PetWeight,
-                    Price = price.PriceValue
+                    Price = price
                 };
                 combo.ComboServices.Add(comboService);
             }
@@ -151,11 +152,11 @@ namespace PetGrooming_Management_System.Repositories
             return combo;   
         }
 
-        public async Task<object> DisplayComboById(int id)
+        public async Task<ComboResponse> DisplayComboById(int id)
         {
             return await _dbContext.Combos
                 .Where(c => c.Id == id)
-                .Select(e => new
+                .Select(e => new ComboResponse
                 {
                     ComboId = e.Id,
                     ComboName = e.Name,
@@ -163,15 +164,15 @@ namespace PetGrooming_Management_System.Repositories
                     IsActive = e.IsActive,
                     ComboServices = e.ComboServices
                                 .GroupBy(cs => new { cs.PetName, cs.PetWeight })
-                                .Select(g => new
+                                .Select(g => new ComboServiceGroupResponse
                                 {
                                     PetName = g.Key.PetName,
                                     PetWeight = g.Key.PetWeight,
                                     TotalPrice = g.Sum(cs => cs.Price),
                                     DiscountPrice = g.Sum(cs => cs.Price) * (1.0 - DiscountCombo(g.Count()).Result),
-                                    Service = g.Select(cs => new
+                                    Services = g.Select(cs => new ServiceResponse
                                     {
-                                        ServiceId = cs.ServiceId,
+                                        ServiceId = (int)cs.ServiceId,
                                         ServiceName = cs.Service.ServiceName,
                                         Price = cs.Price,
                                     }).ToList()
@@ -179,5 +180,33 @@ namespace PetGrooming_Management_System.Repositories
                 })
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<ICollection<ComboResponse>> GetListComboByPet(string petName, string petWeight)
+        {
+            var combos = await _dbContext.Combos.Select(e => new ComboResponse
+                                                {
+                                                    ComboId = e.Id,
+                                                    ComboName = e.Name,
+                                                    ComboServices = e.ComboServices
+                                                                    .Where(cs => cs.PetName == petName && cs.PetWeight == petWeight)
+                                                                    .GroupBy(cs => new { cs.PetName, cs.PetWeight })
+                                                                    .Select(g => new ComboServiceGroupResponse
+                                                                    {
+                                                                        PetName = g.Key.PetName,
+                                                                        PetWeight = g.Key.PetWeight,
+                                                                        TotalPrice = g.Sum(cs => cs.Price),
+                                                                        DiscountPrice = g.Sum(cs => cs.Price) * (1.0 - DiscountCombo(g.Count()).Result),
+                                                                        Services = g.Select(cs => new ServiceResponse
+                                                                        {
+                                                                            ServiceId = (int)cs.ServiceId,
+                                                                            ServiceName = cs.Service.ServiceName,
+                                                                            Price = cs.Price,
+                                                                        }).ToList()
+                                                                    }).ToList()
+                                                }).Where(c => c.ComboServices.Any())
+                                                  .ToListAsync();
+            return combos;
+        }
     }
 }
+

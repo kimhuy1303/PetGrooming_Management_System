@@ -43,11 +43,11 @@ namespace PetGrooming_Management_System.Controllers
             if (rawSchedule == null) return BadRequest(ModelState);
             await _scheduleRepository.CreateSchedule(rawSchedule);
             var message = "The work schedule (" + rawSchedule.StartDate.ToString("dd/MM/yyyy")+"-"+rawSchedule.EndDate.ToString("dd/MM/yyyy") + " has been announced. Please check your work schedule!";
-            //await _notificationRepository.SendNotificationToAllEmployees(message);
+            await _notificationRepository.SendNotificationToAllEmployees(message);
             return Ok("Scheduling automation is successful!");
         }
 
-        [HttpGet("/Employee/{id}")]
+        [HttpGet("Employee/{id}")]
         public async Task<ActionResult> GetEmployeeShiftsByEmployeeId(int id, DateTime start, DateTime end)
         {
             if (new ValidateDateTime().DayRange(start, end) != 5) return BadRequest("Date is not valid!");
@@ -68,7 +68,7 @@ namespace PetGrooming_Management_System.Controllers
             return Ok(schedule);
         }
 
-        [HttpPut("update-shift/{scheduleId}")]
+        [HttpPut("UpdateShift/{id}")]
         [Authorize(Roles = "Manager")]
         public async Task<ActionResult> UpdateEmployeeShiftInSchedule(int id, [FromBody] EmployeeShiftRequest employeeShiftRequest)
         {

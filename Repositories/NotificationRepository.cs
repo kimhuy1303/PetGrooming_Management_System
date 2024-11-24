@@ -38,6 +38,8 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task SendNotificationToAllEmployees(string message)
         {
+            try
+            {
             var announce = await Add(message);
             var employees = await _employeeRepository.GetAllEmployees();
             var employeeAnnouncements = employees.Select(employee => new UserAnnouncements
@@ -52,42 +54,61 @@ namespace PetGrooming_Management_System.Repositories
             await _dbcontext.SaveChangesAsync();
 
             await _notihub.SendNotificationToEmployees(message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while sending notification: {ex.Message}");
+            }
         }
 
         public async Task SendNotificationToCustomer(string message, int customerId, int appointmentId)
         {
-            var announce = await Add(message);
-            var customerAnnouce = new UserAnnouncements
+            try
             {
-                UserId = customerId,
-                User = await _userRepository.GetUserById(customerId),
-                AnnoucementId = announce.Id,
-                Annoucement = announce,
-                AppointmentId = appointmentId,
-                Appointment = await _appointmentRepository.GetAppointmentById(appointmentId),
-                HasRead = false
-            };
-            await _dbcontext.UserAnnouncements.AddAsync(customerAnnouce);
-            await _dbcontext.SaveChangesAsync();
-            await _notihub.SendNotification(customerId.ToString(), message);
+                var announce = await Add(message);
+                var customerAnnouce = new UserAnnouncements
+                {
+                    UserId = customerId,
+                    User = await _userRepository.GetUserById(customerId),
+                    AnnoucementId = announce.Id,
+                    Annoucement = announce,
+                    AppointmentId = appointmentId,
+                    Appointment = await _appointmentRepository.GetAppointmentById(appointmentId),
+                    HasRead = false
+                };
+                await _dbcontext.UserAnnouncements.AddAsync(customerAnnouce);
+                await _dbcontext.SaveChangesAsync();
+                await _notihub.SendNotification(customerId.ToString(), message);
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine($"Error while sending notification: {ex.Message}");
+            }
         }
 
         public async Task SendNotificationToEmployee(string message, int employeeId, int appointmentId)
         {
-            var announce = await Add(message);
-            var customerAnnouce = new UserAnnouncements
+            try
             {
-                UserId = employeeId,
-                User = await _employeeRepository.GetEmployeeById(employeeId),
-                AnnoucementId = announce.Id,
-                Annoucement = announce,
-                AppointmentId = appointmentId,
-                Appointment = await _appointmentRepository.GetAppointmentById(appointmentId),
-                HasRead = false
-            };
-            await _dbcontext.UserAnnouncements.AddAsync(customerAnnouce);
-            await _dbcontext.SaveChangesAsync();
-            await _notihub.SendNotification(employeeId.ToString(), message);
+                var announce = await Add(message);
+                var customerAnnouce = new UserAnnouncements
+                {
+                    UserId = employeeId,
+                    User = await _employeeRepository.GetEmployeeById(employeeId),
+                    AnnoucementId = announce.Id,
+                    Annoucement = announce,
+                    AppointmentId = appointmentId,
+                    Appointment = await _appointmentRepository.GetAppointmentById(appointmentId),
+                    HasRead = false
+                };
+                await _dbcontext.UserAnnouncements.AddAsync(customerAnnouce);
+                await _dbcontext.SaveChangesAsync();
+                await _notihub.SendNotification(employeeId.ToString(), message);
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine($"Error while sending notification: {ex.Message}");
+            }
         }
 
         public async Task<List<Annoucement>> GetListByUserId(int userId)
@@ -107,6 +128,11 @@ namespace PetGrooming_Management_System.Repositories
                 announce.HasRead = true;
                 await _dbcontext.SaveChangesAsync();
             }
+        }
+
+        public async Task<IEnumerable<UserAnnouncements>> GetAnnouncementsUnread(int userId)
+        {
+            return await _dbcontext.UserAnnouncements.Where(e => e.UserId == userId && !e.HasRead).ToListAsync();
         }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PetGrooming_Management_System.Data;
 
@@ -11,9 +12,11 @@ using PetGrooming_Management_System.Data;
 namespace PetGrooming_Management_System.Migrations
 {
     [DbContext(typeof(MainDBContext))]
-    partial class MainDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241117060508_FixAppointmentTable")]
+    partial class FixAppointmentTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -94,7 +97,7 @@ namespace PetGrooming_Management_System.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AppointmentId")
+                    b.Property<int?>("AppointmentId")
                         .HasColumnType("int");
 
                     b.Property<int?>("ComboId")
@@ -103,23 +106,18 @@ namespace PetGrooming_Management_System.Migrations
                     b.Property<int?>("EmployeeId")
                         .HasColumnType("int");
 
-                    b.Property<string>("PetName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PetWeight")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("TimeWorking")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AppointmentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[AppointmentId] IS NOT NULL");
 
-                    b.HasIndex("ComboId");
+                    b.HasIndex("ComboId")
+                        .IsUnique()
+                        .HasFilter("[ComboId] IS NOT NULL");
 
                     b.HasIndex("EmployeeId");
 
@@ -133,17 +131,6 @@ namespace PetGrooming_Management_System.Migrations
 
                     b.Property<int?>("ServiceId")
                         .HasColumnType("int");
-
-                    b.Property<string>("PetName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PetWeight")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("Price")
-                        .HasColumnType("float");
 
                     b.HasKey("AppointmentDetailId", "ServiceId");
 
@@ -426,10 +413,20 @@ namespace PetGrooming_Management_System.Migrations
                 {
                     b.HasBaseType("PetGrooming_Management_System.Models.User");
 
+                    b.Property<bool>("IsWorking")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<int>("TotalWorkHours")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(0);
+
+                    b.Property<bool>("WorkStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.HasDiscriminator().HasValue("Employee");
                 });
@@ -460,13 +457,11 @@ namespace PetGrooming_Management_System.Migrations
                 {
                     b.HasOne("PetGrooming_Management_System.Models.Appointment", "Appointment")
                         .WithOne("AppointmentDetail")
-                        .HasForeignKey("PetGrooming_Management_System.Models.AppointmentDetail", "AppointmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PetGrooming_Management_System.Models.AppointmentDetail", "AppointmentId");
 
                     b.HasOne("PetGrooming_Management_System.Models.Combo", "Combo")
-                        .WithMany("AppointmentDetails")
-                        .HasForeignKey("ComboId");
+                        .WithOne("AppointmentDetail")
+                        .HasForeignKey("PetGrooming_Management_System.Models.AppointmentDetail", "ComboId");
 
                     b.HasOne("PetGrooming_Management_System.Models.Employee", "Employee")
                         .WithMany("AppointmentDetail")
@@ -593,7 +588,7 @@ namespace PetGrooming_Management_System.Migrations
 
             modelBuilder.Entity("PetGrooming_Management_System.Models.Combo", b =>
                 {
-                    b.Navigation("AppointmentDetails");
+                    b.Navigation("AppointmentDetail");
 
                     b.Navigation("ComboServices");
                 });

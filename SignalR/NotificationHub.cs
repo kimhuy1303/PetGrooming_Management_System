@@ -1,11 +1,18 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
+using PetGrooming_Management_System.IRepositories;
 using System.Security.Claims;
 
 namespace PetGrooming_Management_System.SignalR
 {
     public class NotificationHub : Hub
     {
+        //private readonly INotificationRepository _notificationRepository;
+        //public NotificationHub(INotificationRepository notificationRepository)
+        //{
+        //    _notificationRepository = notificationRepository;
+        //}
         
         public async Task SendNotification(string id, string message)
         {
@@ -22,7 +29,7 @@ namespace PetGrooming_Management_System.SignalR
             await Clients.Group("Manager").SendAsync("ReceiveNotification ", message);
         }
 
-        public override Task OnConnectedAsync()
+        public override async Task OnConnectedAsync()
         {
             var userRole = Context.User?.FindFirst(ClaimTypes.Role)?.Value;
             if (userRole == "Employee")
@@ -32,7 +39,16 @@ namespace PetGrooming_Management_System.SignalR
             {
                 Groups.AddToGroupAsync(Context.ConnectionId, "Manager");
             }
-            return base.OnConnectedAsync();
+            //var userId = Context.User?.FindFirst("UserId")?.Value;
+            //if (!string.IsNullOrEmpty(userId)) 
+            //{
+            //    var pendingNotifications = await _notificationRepository.GetAnnouncementsUnread(int.Parse(userId));
+            //    foreach (var noti in pendingNotifications)
+            //    {
+            //        await SendNotification(userId, noti.Annoucement!.Content!);
+            //    }
+            //}
+            await base.OnConnectedAsync();
         }
         public override Task OnDisconnectedAsync(Exception? exception)
         {
