@@ -4,6 +4,7 @@ using PetGrooming_Management_System.DTOs.Requests;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
 using PetGrooming_Management_System.Utils;
+using System.Drawing;
 
 namespace PetGrooming_Management_System.Repositories
 {
@@ -19,7 +20,7 @@ namespace PetGrooming_Management_System.Repositories
 
             var _employee = new Employee
             {
-                AvatarPath = UploadFile.GetFilePath(employeeDTO.AvatarPath!),
+                AvatarPath = employeeDTO.AvatarPath==null ? UploadFile.GetFilePath("default-avatar.png") : UploadFile.UploadFilePath(employeeDTO.AvatarPath!),
                 Username = employeeDTO.Username,
                 Password = BCrypt.Net.BCrypt.HashPassword(employeeDTO.Password),
                 FullName = employeeDTO.FullName,
@@ -36,6 +37,11 @@ namespace PetGrooming_Management_System.Repositories
             
         }
 
+        public async Task<int> CountEmployee()
+        {
+            return await _dbcontext.Employees.CountAsync();
+        }
+
         public async Task DeleteEmployee(int id)
         {
             var _employee = await GetEmployeeById(id);
@@ -43,9 +49,13 @@ namespace PetGrooming_Management_System.Repositories
             await _dbcontext.SaveChangesAsync();
         }
 
+        public async Task<ICollection<Employee>> GetEmployeesPaged(int page, int size)
+        {
+            return await _dbcontext!.Employees.Skip((page -1 ) * size).Take(size).ToListAsync();
+        }
         public async Task<ICollection<Employee>> GetAllEmployees()
         {
-            return await _dbcontext!.Employees.Include(employee => employee.EmployeeShifts).ThenInclude(e=> e.Shift).ToListAsync();
+            return await _dbcontext!.Employees.ToListAsync();
         }
 
         public async Task<Employee> GetEmployeeById(int id)
@@ -61,7 +71,7 @@ namespace PetGrooming_Management_System.Repositories
         public async Task ModifyProfileEmployee(int id, EmployeeProfileRequest profile)
         {
             var _employee = await GetEmployeeById(id);
-            _employee.AvatarPath = UploadFile.GetFilePath(profile.AvatarPath!);
+            _employee.AvatarPath = UploadFile.UploadFilePath(profile.AvatarPath!);
             _employee.DateOfBirth = profile.DateOfBirth;
             _employee.Address = profile.Address;
             _employee.Gender = profile.Gender;

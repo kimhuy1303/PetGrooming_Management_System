@@ -2,8 +2,20 @@
 {
     public class EmployeeShiftRequest
     {
-        public int IdEmployee { get; set; }
-        public int IdShift { get; set; }
+        public int EmployeeId { get; set; }
+        public int ShiftId { get; set; }
         public DateTime Date { get; set; }
     }
+
+    public class ShiftRequests
+    {
+        public int ShiftId { get; set; }
+        public DateTime Date { get; set; }
+    }
+    public class RegisterShiftRequest
+    {
+        public int EmployeeId { get; set; }
+        public List<ShiftRequests> ShiftRequests { get; set; }
+    }
+
 }

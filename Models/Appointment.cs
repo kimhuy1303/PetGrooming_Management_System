@@ -14,13 +14,15 @@ namespace PetGrooming_Management_System.Models
         public string? PhoneNumber { get; set; }
         public string? Email { get; set; }
         public string? Address { get; set; }
-        public Status Status { get; set; }
+        public string? Status { get; set; }
+        public bool IsConfirm { get; set; }
         public DateTime? CreatedDate { get; set; }
 
         // Navigate
-        public int? IdCustomer { get; set; }
+        public int? CustomerId { get; set; }
         public User? Customer { get; set; }
         public AppointmentDetail? AppointmentDetail { get; set; }
+        public Annoucement? Annoucement { get; set; }
 
     }
 }

@@ -16,15 +16,16 @@ namespace PetGrooming_Management_System.Services
         {
             _configuration = configuration;
         }
-        public string generateJwtToken(string userId, Role role, string phoneNumber)
+        public string generateJwtToken(string username, Role role, string phoneNumber, int id)
         {
             var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]!));
             var tokenHandler = new JwtSecurityTokenHandler();
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, username.ToString()),
                 new Claim(ClaimTypes.MobilePhone, phoneNumber.ToString()),
-                new Claim(ClaimTypes.Role, role.ToString())
+                new Claim(ClaimTypes.Role, role.ToString()),
+                new Claim("UserId", id.ToString())
             };
             var signin = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

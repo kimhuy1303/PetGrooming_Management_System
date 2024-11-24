@@ -26,7 +26,7 @@ namespace PetGrooming_Management_System.Models
         public string? Address { get; set; }
         public DateTime? DateOfBirth { get; set; }
 
-        public Role Role { get; set; } = Role.Customer;
+        public Role Role { get; set; }
         public DateTime CreatedDate { get; set; }
 
         // Navigate

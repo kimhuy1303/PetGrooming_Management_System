@@ -2,7 +2,7 @@
 {
     public class ProfileRequest
     {
-        public string? AvatarPath { get; set; }
+        public IFormFile AvatarPath { get; set; }
         public string? FullName { get; set; }
         public string? IdentificationNumber { get; set; }
         public string? Gender { get; set; } 

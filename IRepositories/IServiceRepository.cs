@@ -1,6 +1,7 @@
 ﻿
 
 using PetGrooming_Management_System.DTOs.Requests;
+using PetGrooming_Management_System.DTOs.Responses;
 using PetGrooming_Management_System.Models;
 
 namespace PetGrooming_Management_System.IRepositories
@@ -9,9 +10,20 @@ namespace PetGrooming_Management_System.IRepositories
     {
         Task<ICollection<Service>> GetAllServices();
         Task<Service> GetServiceById(int id);
+        Task<Service> GetServiceByName(string name);
+        Task<Service> GetServiceByPet(int id, string petName, string petWeight);
+        Task<ICollection<ServiceResponse>> GetServicesByPet(string petName, string petWeight);
         Task<Boolean> DeleteService(Service service);
-        Task<Boolean> UpdateService(Service service, ServiceRequest servicedto);
-        Task<Boolean> CreateService(ServiceRequest servicedto);
+        Task<Service> UpdateService(Service service, ServiceRequest servicedto);
+        Task<Service> CreateService(ServiceRequest servicedto);
         Task<ICollection<Service>> SearchService(string key);
+
+        Task ActiveService(int id);
+        Task<ICollection<Service>> SortService(string sortString);
+        Task<Boolean> IsServiceExist(int id, PriceRequest pricedto);
+        Task RemovePrice(Service service, Price price);
+        Task<double> GetPriceService(int id, string petName,string petWeight);
+        
+
     }
 }

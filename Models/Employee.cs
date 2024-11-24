@@ -10,8 +10,6 @@
             }
         }
         public int TotalWorkHours { get; set; } 
-        public bool WorkStatus { get; set; }
-        public bool IsWorking { get; set; }
 
         // Navigate
         public List<EmployeeShift> EmployeeShifts { get; set; } = new List<EmployeeShift>();

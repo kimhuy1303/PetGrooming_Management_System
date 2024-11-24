@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
-using PetGrooming_Management_System.DTOs.Respones;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
 
@@ -45,6 +44,13 @@ namespace PetGrooming_Management_System.Repositories
         public async Task<Shift> GetShiftById(int id)
         {
             return await _dbContext.Shifts.FirstOrDefaultAsync(e => e.Id == id);
+        }
+
+        public async Task<int> GetWorkHoursInTimeSlot(int shiftId)
+        {
+            var shift = await GetShiftById(shiftId);
+            int workHours = shift.EndTime.Value.Hour - shift.StartTime.Value.Hour;
+            return workHours;
         }
 
         public async Task<bool> UpdateShift(int id, ShiftRequest shiftDTO)

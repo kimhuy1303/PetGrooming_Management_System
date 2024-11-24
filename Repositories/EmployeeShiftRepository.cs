@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetGrooming_Management_System.Data;
 using PetGrooming_Management_System.DTOs.Requests;
+using PetGrooming_Management_System.DTOs.Responses;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PetGrooming_Management_System.Repositories
 {
@@ -19,67 +21,159 @@ namespace PetGrooming_Management_System.Repositories
             _shiftRepository = shiftRepository;
 
         }
-        public async Task<Boolean> RegisterShift(EmployeeShiftRequest registerShiftdto)
+        public async Task<bool> RegisterShift(RegisterShiftRequest registerShiftdto)
         {
-            if (registerShiftdto.Date.Date >= DateTime.Now.Date)
+            var emloyee = await _employeeRepository.GetEmployeeById(registerShiftdto.EmployeeId);
+            int flag = 0;
+            foreach (var shiftdto in registerShiftdto.ShiftRequests) 
             {
-                var existingEmployeeShift = await _dbcontext.EmployeeShifts
-                    .FirstOrDefaultAsync(e => e.ShiftId == registerShiftdto.IdShift && e.EmployeeId == registerShiftdto.IdEmployee && e.Date == registerShiftdto.Date);
-                if (existingEmployeeShift == null)
+                if (shiftdto.Date.Date >= DateTime.Now.Date)
                 {
-                    var shift = await _shiftRepository.GetShiftById(registerShiftdto.IdShift);
-                    var employee = await _employeeRepository.GetEmployeeById(registerShiftdto.IdEmployee);
-                    var assignedShift = new EmployeeShift()
+                    var employeeShift = new EmployeeShiftRequest
                     {
-                        Employee = employee,
-                        Shift = shift,
-                        Date = registerShiftdto.Date.Date,
+                        EmployeeId = emloyee.Id,
+                        ShiftId = shiftdto.ShiftId,
+                        Date = shiftdto.Date,
                     };
-                    employee.EmployeeShifts.Add(assignedShift);
-                    await _dbcontext!.SaveChangesAsync();
-                    return true;
+                    var existingEmployeeShift = await IsExist(employeeShift);
+                    if (existingEmployeeShift != true)
+                    {
+                        var shift = await _shiftRepository.GetShiftById(shiftdto.ShiftId);
+                        var assignedShift = new EmployeeShift()
+                        {
+                            EmployeeId = registerShiftdto.EmployeeId,
+                            Employee = emloyee,
+                            ShiftId = shift.Id,
+                            Shift = shift,
+                            Date = shiftdto.Date.Date,
+                        };
+                        await _dbcontext.EmployeeShifts.AddAsync(assignedShift);
+                        await _dbcontext!.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        flag=1;
+                    }
                 }
-                return false;
+                else
+                {
+                    flag=1;
+                }
             }
-            return false;
+            if (flag != 0) return false;
+            return true;
         }
 
-        public async Task<ICollection<EmployeeShift>> GetEmployeeShifts(int id)
+        public async Task<ICollection<EmployeeShift>> GetEmployeeShiftsByIdForAWeek(int id, DateTime start, DateTime end)
         {
-            var employeeShifts = await _dbcontext.EmployeeShifts.Where(e => e.EmployeeId == id).ToListAsync();
+            var employeeShifts = await _dbcontext.EmployeeShifts.Where(e => e.EmployeeId == id && e.Date.Date >= start.Date && e.Date.Date <= end.Date).ToListAsync();
             return employeeShifts;
         }
-        public async Task<EmployeeShift> GetEmployeeShift(EmployeeShiftRequest employeeShiftdto)
+        public async Task<EmployeeShift> GetEmployeeShift(int employeeId, DateTime date)
         {
             var employeeShift = await _dbcontext.EmployeeShifts
-                .FirstOrDefaultAsync(e => e.EmployeeId == employeeShiftdto.IdEmployee && 
-                                          e.ShiftId == employeeShiftdto.IdShift && 
-                                          e.Date == employeeShiftdto.Date);
+                .FirstOrDefaultAsync(e => e.EmployeeId == employeeId && 
+                                          e.Date.Date == date.Date);
             return employeeShift;
         }
 
-        public async Task<bool> DeleteEmployeeShift(EmployeeShiftRequest employeeShiftdto)
+        public async Task DeleteEmployeeShift(EmployeeShiftRequest employeeShiftdto)
         {
-            var employeeShift = await GetEmployeeShift(employeeShiftdto);
+            var employeeShift = await GetEmployeeShift(employeeShiftdto.EmployeeId, employeeShiftdto.Date);
             if (employeeShift != null) 
             {
                 _dbcontext!.EmployeeShifts.Remove(employeeShift);
                 _dbcontext!.SaveChanges();
-                return true;
             }
+        }
+
+        public async Task UpdateEmployeeShift(EmployeeShiftRequest employeeShiftdto)
+        {
+            var registeredShift = await GetEmployeeShift(employeeShiftdto.EmployeeId, employeeShiftdto.Date);
+            if (registeredShift != null) registeredShift.ShiftId = employeeShiftdto.ShiftId;
+            await _dbcontext.SaveChangesAsync();
+        }
+
+        public async Task<ICollection<EmployeeShift>> GetEmployeeShiftsByDay(DateTime date)
+        {
+            var res = await _dbcontext.EmployeeShifts.Include(e => e.Employee).Include(e => e.Shift).Where(e => e.Date.Date == date.Date && e.Schedule != null).ToListAsync();
+            return res;
+        }
+
+        public async Task<IEnumerable<EmployeeShift>> GetEmployeeShiftsForWeek(DateTime start, DateTime end)
+        {
+            var result = await _dbcontext.EmployeeShifts.Include(e => e.Employee).Include(e => e.Shift).Where(e => e.Date.Day >= start.Day && e.Date.Day <= end.Day).ToListAsync();
+
+            return result;
+        }
+
+        public async Task<int> GetNumberOfEmployeeRegisterShiftForAWeek(DateTime start, DateTime end)
+        {
+            var result = await GetNotScheduleEmployeeShiftsForWeek(start,end);
+            return result.Select(e=>e.EmployeeId).Distinct().Count();
+        }
+
+        public async Task<IEnumerable<EmployeeShift>> GetEmployeeShifts(int employeeId)
+        {
+            return await _dbcontext.EmployeeShifts.Where(e => e.EmployeeId == employeeId).OrderBy(e => e.Date.Date).ToListAsync();
+        }
+
+        public async Task<bool> IsExist(EmployeeShiftRequest employeeShiftRequest)
+        {
+            var check = await _dbcontext.EmployeeShifts.FirstOrDefaultAsync(e => e.EmployeeId == employeeShiftRequest.EmployeeId &&
+                                          e.Date.Date == employeeShiftRequest.Date.Date
+                                          && e.ShiftId == employeeShiftRequest.ShiftId);
+            if (check != null) return true;
             return false;
         }
 
-        public async Task<bool> UpdateEmployeeShift(EmployeeShiftRequest employeeShiftdto)
+        public async Task<IEnumerable<EmployeeShiftResponse>> GetNotScheduleEmployeeShiftsForWeek(DateTime start, DateTime end)
         {
-            // Handling
-            return true;
+            var result = await _dbcontext.EmployeeShifts.Where(e => e.Date.Day >= start.Day && e.Date.Day <= end.Day && e.Schedule.Equals(null))
+                                                        .OrderBy(e => e.Date)
+                                                        .Select(ems => new EmployeeShiftResponse
+                                                        {
+                                                            ShiftId = ems.ShiftId,
+                                                            TimeSlot = ems.Shift.TimeSlot,
+                                                            EmployeeId = ems.EmployeeId,
+                                                            EmployeeName = ems.Employee.FullName,
+                                                            EmployeeWorkHours = ems.Employee.TotalWorkHours,
+                                                            Date = ems.Date.Date
+
+                                                        })
+                                                        .ToListAsync();
+
+            return result;
         }
 
-        public async Task<ICollection<EmployeeShift>> GetEmployeeShiftsByDay(int day)
+        public async Task<ICollection<EmployeeShiftResponse>> GetNotScheduleEmployeeShiftsByDay(DateTime date)
         {
-            var res = await _dbcontext.EmployeeShifts.Where(e => e.Date.Day == day).ToListAsync();
+            var res = await _dbcontext.EmployeeShifts.Where(e => e.Date.Date == date.Date && e.Schedule.Equals(null))
+                                                     .Select(ems => new EmployeeShiftResponse
+                                                     {
+                                                         ShiftId = ems.ShiftId,
+                                                         TimeSlot = ems.Shift.TimeSlot,
+                                                         EmployeeId = ems.EmployeeId,
+                                                         EmployeeName = ems.Employee.FullName,
+                                                         EmployeeWorkHours = ems.Employee.TotalWorkHours,
+                                                         Date = ems.Date.Date
+
+                                                     })
+                                                     .ToListAsync();
             return res;
+        }
+
+        public async Task UpdateTotalHoursWorkOfEmployee(int workHour, Employee employee)
+        {
+            employee.TotalWorkHours += workHour;
+            await _dbcontext.SaveChangesAsync();
+        }
+
+        public async Task<bool> IsEmployeeWorkingByDateInSchedule(int employeeId, DateTime date)
+        {
+            var employeeShiftByDate = await GetEmployeeShiftsByDay(date);
+            var isWorking = employeeShiftByDate.Any(e => e.EmployeeId == employeeId);
+            return isWorking;
         }
     }
 }

@@ -20,8 +20,10 @@ namespace PetGrooming_Management_System.Data
         public DbSet<Service> Services { get; set; }
         public DbSet<Combo> Combos { get; set; }
         public DbSet<AppointmentDetail> AppointmentDetails { get; set; }
+        public DbSet<AppointmentService> AppointmentServices { get; set; }
         public DbSet<ComboServices> ComboServices { get; set; }
         public DbSet<UserAnnouncements> UserAnnouncements { get; set; }
+        public DbSet<Schedule> Schedules { get; set; }
         
         public DbSet<Price> Prices { get; set; }
 
@@ -38,12 +40,6 @@ namespace PetGrooming_Management_System.Data
             modelBuilder.Entity<Employee>()
                 .Property(e => e.TotalWorkHours)
                 .HasDefaultValue(0);
-            modelBuilder.Entity<Employee>()
-                .Property(e => e.WorkStatus)
-                .HasDefaultValue(false);
-            modelBuilder.Entity<Employee>()
-                .Property(e => e.IsWorking)
-                .HasDefaultValue(false);
             modelBuilder.Entity<UserAnnouncements>()
                 .Property(e => e.HasRead)
                 .HasDefaultValue(false);
@@ -54,6 +50,8 @@ namespace PetGrooming_Management_System.Data
                 new Shift {Id=1, TimeSlot = 1, StartTime = new TimeOnly(8, 0), EndTime = new TimeOnly(12, 0) },
                 new Shift {Id=2, TimeSlot = 2, StartTime = new TimeOnly(13, 0), EndTime = new TimeOnly(17, 0) }
             );
+
+            
 
             // Many to Many
             // Employee - Shift
@@ -106,9 +104,15 @@ namespace PetGrooming_Management_System.Data
                 .HasOne(e => e.Service)
                 .WithMany(e => e.AppointmentServices)
                 .HasForeignKey (e => e.ServiceId);
+            modelBuilder.Entity<ComboServices>()
+            .HasKey(cs => new { cs.ComboId, cs.ServiceId, cs.PetName, cs.PetWeight });
 
+            modelBuilder.Entity<AppointmentDetail>()
+                .HasOne(ad => ad.Combo)
+                .WithMany(c => c.AppointmentDetails)
+                .HasForeignKey(ad => ad.ComboId) // FK tới Combo
+                .IsRequired(false); // ComboId có thể NULL
 
-                
             base.OnModelCreating(modelBuilder);
 
         }

@@ -9,10 +9,12 @@ namespace PetGrooming_Management_System.Models
         [Key]
         public int Id {  get; set; }   
         public DateTime TimeWorking { get; set; }
+        public string PetName { get; set; }
+        public string PetWeight { get; set; }
 
         // Navigate
-        public int? AppointmentId { get; set; }
-        public Appointment? Appointment { get; set; }
+        public int AppointmentId { get; set; }
+        public Appointment Appointment { get; set; }
 
         public int? EmployeeId { get; set; }
         public Employee? Employee { get; set; }

@@ -1,5 +1,4 @@
 ﻿using PetGrooming_Management_System.DTOs.Requests;
-using PetGrooming_Management_System.DTOs.Respones;
 using PetGrooming_Management_System.Models;
 
 namespace PetGrooming_Management_System.IRepositories
@@ -13,6 +12,6 @@ namespace PetGrooming_Management_System.IRepositories
         Task<Boolean> DeleteShiftById(int id);
         Task<Boolean> UpdateShift(int id, ShiftRequest shiftDTO);
 
-        
+        Task<int> GetWorkHoursInTimeSlot(int shiftId);
     }
 }

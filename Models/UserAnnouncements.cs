@@ -9,6 +9,9 @@
         public int? AnnoucementId { get; set; }
         public Annoucement? Annoucement { get; set; }
 
+        public int? AppointmentId { get; set; }
+        public Appointment? Appointment { get; set; }
+
         public Boolean HasRead { get; set; }
     }
 }

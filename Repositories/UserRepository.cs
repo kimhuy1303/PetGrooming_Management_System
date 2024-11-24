@@ -4,6 +4,9 @@ using PetGrooming_Management_System.DTOs.Requests;
 using PetGrooming_Management_System.IRepositories;
 using PetGrooming_Management_System.Models;
 using PetGrooming_Management_System.Utils;
+using PetGrooming_Management_System.Configs.Constant;
+using Azure.Core;
+using PetGrooming_Management_System.DTOs.Responses;
 
 
 namespace PetGrooming_Management_System.Repositories
@@ -18,6 +21,7 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task<bool> CreateUser(UserRequest userDTO)
         {
+            string defaultAvatarPath = UploadFile.GetFilePath("default-avatar.png");
             var _user = new User
             {
                 Username = userDTO.UserName,
@@ -25,6 +29,7 @@ namespace PetGrooming_Management_System.Repositories
                 Password = userDTO.Password,
                 PhoneNumber = userDTO.PhoneNumber,
                 Role = userDTO.Role,
+                AvatarPath = defaultAvatarPath,
                 CreatedDate = DateTime.UtcNow
 
             };
@@ -33,7 +38,7 @@ namespace PetGrooming_Management_System.Repositories
             return res > 0;
         }
 
-        public async void DeleteUser(int id)
+        public async Task DeleteUser(int id)
         {
             var _user = await GetUserById(id);
             _dbContext.Users.Remove(_user!);
@@ -42,19 +47,19 @@ namespace PetGrooming_Management_System.Repositories
 
         public async Task<User> GetUserById(int id)
         {
-            var _user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == id);
+            var _user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == id && x.Role == Config.Constant.Role.Customer);
             return _user;
         }
 
         public async Task<List<User>> SearchUser(string key)
         {
-            var result = await _dbContext.Users.Where(e => e.Username!.Contains(key) || e.FullName!.Contains(key) || e.Email!.Contains(key)).ToListAsync();
+            var result = await _dbContext.Users.Where(e => e.Role == Config.Constant.Role.Customer && e.Username!.Contains(key) || e.FullName!.Contains(key) || e.Email!.Contains(key) || e.PhoneNumber!.Contains(key)).ToListAsync();
             return result;
         }
 
-        public async Task<ICollection<User>> GetAll()
+        public async Task<ICollection<User>> GetAll(int page, int size)
         {
-            var result = await _dbContext.Users.ToListAsync();
+            var result = await _dbContext.Users.Where(e => e.Role == Config.Constant.Role.Customer).Skip((page - 1) * size).Take(size).ToListAsync();
             return result;
         }
 
@@ -69,20 +74,37 @@ namespace PetGrooming_Management_System.Repositories
             return BCrypt.Net.BCrypt.Verify(password, user.Password);
         }
 
-        public void ModifyUser(int id, ProfileRequest request)
+        public async Task<User> ModifyUser(int id, ProfileRequest request)
         {
             // UploadFile cho avatar 
-            var avatarPath = UploadFile.GetFilePath(request.AvatarPath!);
+            var avatarPath = UploadFile.UploadFilePath(request.AvatarPath);
            
-            var _user = this.GetUserById(id);
-            _user.Result.FullName = request.FullName;
-            _user.Result.Email = request.Email;
-            _user.Result.Address = request.Address;
-            _user.Result.Gender = request.Gender;
-            _user.Result.PhoneNumber = request.PhoneNumber;
-            _user.Result.AvatarPath = avatarPath;
-            _user.Result.DateOfBirth = request.DateOfBirth;
+            var _user = await GetUserById(id);
+            _user.FullName = request.FullName;
+            _user.Email = request.Email;
+            _user.Address = request.Address;
+            _user.Gender = request.Gender;
+            _user.PhoneNumber = request.PhoneNumber;
+            _user.AvatarPath = avatarPath;
+            _user.DateOfBirth = request.DateOfBirth;
             _dbContext.SaveChanges();
+            return _user;
+        }
+
+        public async Task<ProfileResponse> ViewProfile(int id)
+        {
+            var profile = await _dbContext.Users.FirstOrDefaultAsync(e => e.Id == id);
+            return new ProfileResponse
+            {
+                FullName = profile.FullName != null ? profile.FullName : "",
+                Email = profile.Email != null ? profile.Email : "",
+                Address = profile.Address != null ? profile.Address : "" ,
+                Gender = profile.Gender != null ? profile.Gender : "",
+                PhoneNumber = profile.PhoneNumber != null ? profile.PhoneNumber : "",
+                AvatarPath = profile.AvatarPath != null ? profile.AvatarPath : "",
+                DateOfBirth = profile.DateOfBirth != null ? profile.DateOfBirth.Value.Date : new DateTime(),
+                IdentificationNumber = profile?.IdentificationNumber != null ? profile.IdentificationNumber : "",
+            };
         }
     }
 }
